@@ -1,9 +1,9 @@
 import 'package:intl/intl.dart';
-import 'package:OpenContacts/config.dart';
-import 'package:OpenContacts/crypto_helper.dart';
-import 'package:OpenContacts/models/session.dart';
-import 'package:OpenContacts/models/session_metadata.dart';
-import 'package:OpenContacts/models/users/online_status.dart';
+import 'package:open_contacts/config.dart';
+import 'package:open_contacts/crypto_helper.dart';
+import 'package:open_contacts/models/session.dart';
+import 'package:open_contacts/models/session_metadata.dart';
+import 'package:open_contacts/models/users/online_status.dart';
 import 'package:uuid/uuid.dart';
 
 enum UserSessionType

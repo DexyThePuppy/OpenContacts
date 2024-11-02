@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:OpenContacts/clients/api_client.dart';
-import 'package:OpenContacts/models/personal_profile.dart';
-import 'package:OpenContacts/models/users/user.dart';
-import 'package:OpenContacts/models/users/user_status.dart';
+import 'package:open_contacts/clients/api_client.dart';
+import 'package:open_contacts/models/personal_profile.dart';
+import 'package:open_contacts/models/users/user.dart';
+import 'package:open_contacts/models/users/user_status.dart';
 
 class UserApi {
   static Future<Iterable<User>> searchUsers(ApiClient client, {required String needle}) async {
@@ -21,7 +21,6 @@ class UserApi {
   }
 
   static Future<UserStatus> getUserStatus(ApiClient client, {required String userId}) async {
-    return UserStatus.empty();
     final response = await client.get("/users/$userId/status");
     client.checkResponse(response);
     final data = jsonDecode(response.body);

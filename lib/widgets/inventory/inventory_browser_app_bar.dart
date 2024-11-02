@@ -9,9 +9,10 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:OpenContacts/auxiliary.dart';
-import 'package:OpenContacts/clients/inventory_client.dart';
+import 'package:open_contacts/auxiliary.dart';
+import 'package:open_contacts/clients/inventory_client.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:open_contacts/models/view_modes.dart';
 
 class InventoryBrowserAppBar extends StatefulWidget {
   const InventoryBrowserAppBar({super.key});
@@ -48,61 +49,26 @@ class _InventoryBrowserAppBarState extends State<InventoryBrowserAppBar> {
                   key: const ValueKey("default-appbar"),
                   title: const Text("Inventory"),
                   actions: [
-                    PopupMenuButton(
-                      icon: const Icon(Icons.swap_vert),
-                      onSelected: (value) {
-                        iClient.sortReverse = value;
+                    PopupMenuButton<ViewMode>(
+                      icon: Icon(iClient.viewMode.icon),
+                      tooltip: "Change view",
+                      onSelected: (ViewMode mode) {
+                        iClient.viewMode = mode;
                       },
-                      itemBuilder: (context) {
-                        return [
-                          PopupMenuItem(
-                            value: false,
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.arrow_upward,
-                                  color: iClient.sortReverse == false
-                                      ? Theme.of(context).colorScheme.primary
-                                      : Theme.of(context).colorScheme.onSurface,
-                                ),
-                                const SizedBox(
-                                  width: 8,
-                                ),
-                                Text(
-                                  "Ascending",
-                                  style: TextStyle(
-                                    color: iClient.sortReverse == false
-                                        ? Theme.of(context).colorScheme.primary
-                                        : Theme.of(context).colorScheme.onSurface,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          PopupMenuItem(
-                            value: true,
-                            child: Row(
-                              children: [
-                                Icon(Icons.arrow_downward,
-                                    color: iClient.sortReverse == true
-                                        ? Theme.of(context).colorScheme.primary
-                                        : Theme.of(context).colorScheme.onSurface),
-                                const SizedBox(
-                                  width: 8,
-                                ),
-                                Text(
-                                  "Descending",
-                                  style: TextStyle(
-                                    color: iClient.sortReverse == true
-                                        ? Theme.of(context).colorScheme.primary
-                                        : Theme.of(context).colorScheme.onSurface,
-                                  ),
-                                ),
-                              ],
+                      itemBuilder: (context) => ViewMode.values
+                          .map(
+                            (mode) => PopupMenuItem(
+                              value: mode,
+                              child: Row(
+                                children: [
+                                  Icon(mode.icon),
+                                  const SizedBox(width: 8),
+                                  Text(mode.label),
+                                ],
+                              ),
                             ),
                           )
-                        ];
-                      },
+                          .toList(),
                     ),
                     Padding(
                       padding: const EdgeInsets.only(right: 8.0),

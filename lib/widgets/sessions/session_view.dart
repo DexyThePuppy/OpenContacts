@@ -1,12 +1,12 @@
-import 'package:OpenContacts/models/users/user.dart';
+// import 'package:open_contacts/models/users/user.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:OpenContacts/apis/session_api.dart';
-import 'package:OpenContacts/auxiliary.dart';
-import 'package:OpenContacts/client_holder.dart';
-import 'package:OpenContacts/models/session.dart';
-import 'package:OpenContacts/widgets/formatted_text.dart';
-import 'package:OpenContacts/widgets/panorama.dart';
-import 'package:OpenContacts/widgets/settings_page.dart';
+import 'package:open_contacts/apis/session_api.dart';
+import 'package:open_contacts/auxiliary.dart';
+import 'package:open_contacts/client_holder.dart';
+import 'package:open_contacts/models/session.dart';
+import 'package:open_contacts/widgets/formatted_text.dart';
+import 'package:open_contacts/widgets/panorama.dart';
+import 'package:open_contacts/widgets/settings_page.dart';
 import 'package:flutter/material.dart';
 
 class SessionView extends StatefulWidget {

@@ -1,10 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:OpenContacts/auxiliary.dart';
-import 'package:OpenContacts/clients/session_client.dart';
-import 'package:OpenContacts/models/session.dart';
-import 'package:OpenContacts/widgets/default_error_widget.dart';
-import 'package:OpenContacts/widgets/formatted_text.dart';
-import 'package:OpenContacts/widgets/sessions/session_view.dart';
+import 'package:open_contacts/auxiliary.dart';
+import 'package:open_contacts/clients/session_client.dart';
+import 'package:open_contacts/models/session.dart';
+import 'package:open_contacts/widgets/default_error_widget.dart';
+import 'package:open_contacts/widgets/formatted_text.dart';
+import 'package:open_contacts/widgets/sessions/session_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
@@ -15,8 +15,8 @@ class SessionList extends StatefulWidget {
   @override
   State<SessionList> createState() => _SessionListState();
 }
-class onKeyIntent extends Intent{
-  const onKeyIntent();
+class OnKeyIntent extends Intent{
+  const OnKeyIntent();
 }
 
 const onKey = SingleActivator(LogicalKeyboardKey.f5);

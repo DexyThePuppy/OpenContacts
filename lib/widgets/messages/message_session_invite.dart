@@ -1,12 +1,12 @@
 import 'dart:convert';
 
-import 'package:OpenContacts/auxiliary.dart';
-import 'package:OpenContacts/models/message.dart';
-import 'package:OpenContacts/models/session.dart';
-import 'package:OpenContacts/widgets/formatted_text.dart';
-import 'package:OpenContacts/widgets/generic_avatar.dart';
-import 'package:OpenContacts/widgets/messages/message_state_indicator.dart';
-import 'package:OpenContacts/widgets/sessions/session_view.dart';
+import 'package:open_contacts/auxiliary.dart';
+import 'package:open_contacts/models/message.dart';
+import 'package:open_contacts/models/session.dart';
+import 'package:open_contacts/widgets/formatted_text.dart';
+import 'package:open_contacts/widgets/generic_avatar.dart';
+import 'package:open_contacts/widgets/messages/message_state_indicator.dart';
+import 'package:open_contacts/widgets/sessions/session_view.dart';
 import 'package:flutter/material.dart';
 
 class MessageSessionInvite extends StatelessWidget {

@@ -1,9 +1,9 @@
-import 'package:OpenContacts/client_holder.dart';
-import 'package:OpenContacts/models/message.dart';
-import 'package:OpenContacts/widgets/messages/message_asset.dart';
-import 'package:OpenContacts/widgets/messages/message_audio_player.dart';
-import 'package:OpenContacts/widgets/messages/message_session_invite.dart';
-import 'package:OpenContacts/widgets/messages/message_text.dart';
+import 'package:open_contacts/client_holder.dart';
+import 'package:open_contacts/models/message.dart';
+import 'package:open_contacts/widgets/messages/message_asset.dart';
+import 'package:open_contacts/widgets/messages/message_audio_player.dart';
+import 'package:open_contacts/widgets/messages/message_session_invite.dart';
+import 'package:open_contacts/widgets/messages/message_text.dart';
 import 'package:flutter/material.dart';
 
 class MessageBubble extends StatelessWidget {
@@ -16,7 +16,7 @@ class MessageBubble extends StatelessWidget {
     final bool mine = message.senderId == ClientHolder.of(context).apiClient.userId;
     final colorScheme = Theme.of(context).colorScheme;
     final foregroundColor = mine ? colorScheme.onPrimaryContainer : colorScheme.onSurfaceVariant;
-    final backgroundColor = mine ? colorScheme.primaryContainer : colorScheme.surfaceVariant;
+    final backgroundColor = mine ? colorScheme.primaryContainer : colorScheme.surfaceContainerHighest ;
     return Padding(
       padding: EdgeInsets.only(left: mine ? 32 : 12, bottom: 16, right: mine ? 12 : 32),
       child: Row(

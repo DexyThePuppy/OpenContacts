@@ -23,13 +23,13 @@
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="recon">
+  <meta name="apple-mobile-web-app-title" content="OpenContacts">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>recon</title>
+  <title>OpenContacts</title>
   <link rel="manifest" href="manifest.json">
 
   <script>
@@ -38,6 +38,19 @@
   </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
+
+  <!-- Add CORS headers -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self' 'unsafe-inline' 'unsafe-eval';
+    connect-src 'self' https://git.mrdab.vore.media https://api.resonite.com;
+    img-src 'self' data: https: http:;
+    font-src 'self' https://fonts.gstatic.com data:;
+    style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  ">
+
+  <!-- Add this before the existing Content-Security-Policy -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&family=Noto+Sans+Symbols&display=swap" rel="stylesheet">
 </head>
 <body>
   <script>

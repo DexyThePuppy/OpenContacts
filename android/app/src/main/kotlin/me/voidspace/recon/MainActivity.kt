@@ -1,4 +1,4 @@
-package me.voidspace.recon
+package me.voidspace.OpenContacts
 
 import io.flutter.embedding.android.FlutterActivity
 

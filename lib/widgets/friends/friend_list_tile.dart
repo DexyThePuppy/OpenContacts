@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:OpenContacts/auxiliary.dart';
-import 'package:OpenContacts/clients/messaging_client.dart';
-import 'package:OpenContacts/models/message.dart';
-import 'package:OpenContacts/models/users/friend.dart';
-import 'package:OpenContacts/models/users/online_status.dart';
-import 'package:OpenContacts/widgets/formatted_text.dart';
-import 'package:OpenContacts/widgets/friends/friend_online_status_indicator.dart';
-import 'package:OpenContacts/widgets/generic_avatar.dart';
-import 'package:OpenContacts/widgets/messages/messages_list.dart';
-import 'package:OpenContacts/widgets/my_profile_dialog.dart';
+import 'package:open_contacts/auxiliary.dart';
+import 'package:open_contacts/clients/messaging_client.dart';
+import 'package:open_contacts/models/message.dart';
+import 'package:open_contacts/models/users/friend.dart';
+import 'package:open_contacts/models/users/online_status.dart';
+import 'package:open_contacts/widgets/formatted_text.dart';
+import 'package:open_contacts/widgets/friends/friend_online_status_indicator.dart';
+import 'package:open_contacts/widgets/generic_avatar.dart';
+import 'package:open_contacts/widgets/messages/messages_list.dart';
+import 'package:open_contacts/widgets/my_profile_dialog.dart';
 
 class FriendListTile extends StatelessWidget {
   const FriendListTile({required this.friend, required this.unreads, this.onTap, super.key, this.onLongPress});

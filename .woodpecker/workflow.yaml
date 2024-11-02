@@ -6,7 +6,7 @@ steps:
   - name: build
     image: instrumentisto/flutter
     commands:
-      - cd OpenContacts
+      - cd open_contacts
       - echo "Starting to build..."
       - flutter build --debug
   - name: Deploy

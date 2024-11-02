@@ -1,8 +1,8 @@
 import 'dart:math';
 
-import 'package:OpenContacts/client_holder.dart';
-import 'package:OpenContacts/clients/session_client.dart';
-import 'package:OpenContacts/models/session.dart';
+import 'package:open_contacts/client_holder.dart';
+import 'package:open_contacts/clients/session_client.dart';
+import 'package:open_contacts/models/session.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

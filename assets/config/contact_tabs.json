@@ -1,0 +1,26 @@
+{
+  "tabs": [
+    {
+      "id": "all",
+      "label": "All",
+      "icon": "0xf8d9"
+    },
+    {
+      "id": "Friends", 
+      "label": "Friends",
+      "icon": "0xe7ef",
+      "userIds": ["U-1NWSXyNbyjY"]
+    },
+    {
+      "id": "team",
+      "label": "Team",
+      "icon": "0xf233",
+      "userIds": []
+    },
+    {
+      "id": "blocked",
+      "label": "Blocked",
+      "icon": "0xe77a"
+    }
+  ]
+} 

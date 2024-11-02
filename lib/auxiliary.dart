@@ -1,14 +1,40 @@
-import 'package:OpenContacts/config.dart';
+import 'package:open_contacts/config.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart' as p;
 import 'package:html/parser.dart' as htmlparser;
 
 class Aux {
   static String resdbToHttp(String? resdb) {
-    if (resdb == null || resdb.isEmpty) return "";
-    if (resdb.startsWith("http")) return resdb;
-    final filename = p.basenameWithoutExtension(resdb);
-    return "${Config.skyfrostAssetsUrl}/$filename";
+    if (resdb == null || resdb.isEmpty) {
+      return "${Config.skyfrostAssetsUrl}/default_avatar";
+    }
+    
+    // Handle invalid URLs or malformed strings
+    try {
+      if (resdb.startsWith("http")) {
+        Uri.parse(resdb); // Validate URL format
+        return resdb;
+      }
+      
+      final filename = p.basenameWithoutExtension(resdb).trim();
+      if (filename.isEmpty) {
+        return "${Config.skyfrostAssetsUrl}/default_avatar";
+      }
+      
+      // Check file extension
+      final extension = p.extension(resdb).toLowerCase();
+      if (extension == '.exr') {
+        // For EXR files, we'll need to convert them using image_v3
+        // The URL will still point to the EXR file, but our image loading widget
+        // will need to handle the conversion
+        return "${Config.skyfrostAssetsUrl}/$filename$extension";
+      }
+      
+      // For other formats (including .webp), use the standard URL
+      return "${Config.skyfrostAssetsUrl}/$filename";
+    } catch (e) {
+      return "${Config.skyfrostAssetsUrl}/default_avatar";
+    }
   }
 }
 

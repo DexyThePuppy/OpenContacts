@@ -7,14 +7,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:OpenContacts/clients/settings_client.dart';
-import 'package:OpenContacts/main.dart';
-import 'package:OpenContacts/models/authentication_data.dart';
+import 'package:open_contacts/clients/settings_client.dart';
+import 'package:open_contacts/main.dart';
+import 'package:open_contacts/models/authentication_data.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(recon(
+    await tester.pumpWidget(Recon(
       settingsClient: SettingsClient(),
       cachedAuthentication: AuthenticationData.unauthenticated(),
     ));

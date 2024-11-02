@@ -13,19 +13,21 @@ import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
-import 'package:OpenContacts/apis/github_api.dart';
-import 'package:OpenContacts/client_holder.dart';
-import 'package:OpenContacts/clients/api_client.dart';
-import 'package:OpenContacts/clients/inventory_client.dart';
-import 'package:OpenContacts/clients/messaging_client.dart';
-import 'package:OpenContacts/clients/session_client.dart';
-import 'package:OpenContacts/clients/settings_client.dart';
-import 'package:OpenContacts/models/sem_ver.dart';
-import 'package:OpenContacts/widgets/homepage.dart';
-import 'package:OpenContacts/widgets/login_screen.dart';
-import 'package:OpenContacts/widgets/update_notifier.dart';
+import 'package:open_contacts/apis/github_api.dart';
+import 'package:open_contacts/client_holder.dart';
+import 'package:open_contacts/clients/api_client.dart';
+import 'package:open_contacts/clients/inventory_client.dart';
+import 'package:open_contacts/clients/messaging_client.dart';
+import 'package:open_contacts/clients/session_client.dart';
+import 'package:open_contacts/clients/settings_client.dart';
+import 'package:open_contacts/models/sem_ver.dart';
+import 'package:open_contacts/widgets/homepage.dart';
+import 'package:open_contacts/widgets/login_screen.dart';
+import 'package:open_contacts/widgets/update_notifier.dart';
 
 import 'models/authentication_data.dart';
+
+final _logger = Logger('main');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -55,24 +57,26 @@ void main() async {
   AuthenticationData cachedAuth = AuthenticationData.unauthenticated();
   try {
     cachedAuth = await ApiClient.tryCachedLogin();
-  } catch (_) {
-    // Ignore
+    _logger.info('Successfully retrieved cached login');
+  } catch (e) {
+    _logger.warning('Failed to retrieve cached login: $e');
+    // Still ignore but at least log the error
   }
 
-  runApp(recon(settingsClient: settingsClient, cachedAuthentication: cachedAuth));
+  runApp(Recon(settingsClient: settingsClient, cachedAuthentication: cachedAuth));
 }
 
-class recon extends StatefulWidget {
-  const recon({required this.settingsClient, required this.cachedAuthentication, super.key});
+class Recon extends StatefulWidget {
+  const Recon({required this.settingsClient, required this.cachedAuthentication, super.key});
 
   final SettingsClient settingsClient;
   final AuthenticationData cachedAuthentication;
 
   @override
-  State<recon> createState() => _reconState();
+  State<Recon> createState() => _ReconState();
 }
 
-class _reconState extends State<recon> {
+class _ReconState extends State<Recon> {
   final Typography _typography = Typography.material2021(platform: defaultTargetPlatform);
   final ReceivePort _port = ReceivePort();
   late AuthenticationData _authData = widget.cachedAuthentication;
@@ -83,7 +87,10 @@ class _reconState extends State<recon> {
     final settings = ClientHolder.of(context).settingsClient;
     if (_checkedForUpdate) return;
     _checkedForUpdate = true;
+    
     GithubApi.getLatestTagName().then((remoteVer) async {
+      if (!mounted) return;
+      
       final currentVer = (await PackageInfo.fromPlatform()).version;
       SemVer currentSem;
       SemVer remoteSem;
@@ -111,15 +118,13 @@ class _reconState extends State<recon> {
         return;
       }
 
-      if (remoteSem > currentSem && navigator.overlay?.context != null && context.mounted) {
+      if (remoteSem > currentSem && mounted) {
         showDialog(
           context: navigator.overlay!.context,
-          builder: (context) {
-            return UpdateNotifier(
-              remoteVersion: remoteSem,
-              localVersion: currentSem,
-            );
-          },
+          builder: (context) => UpdateNotifier(
+            remoteVersion: remoteSem,
+            localVersion: currentSem,
+          ),
         );
       }
     });
@@ -163,67 +168,75 @@ class _reconState extends State<recon> {
             Phoenix.rebirth(context);
           },
           child: DynamicColorBuilder(
-            builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) => MaterialApp(
-              debugShowCheckedModeBanner: true,
-              title: 'OpenContacts',
-              theme: ThemeData(
-                useMaterial3: true,
-                textTheme: _typography.black,
-                colorScheme:
-                    lightDynamic ?? ColorScheme.fromSeed(seedColor: Colors.purple, brightness: Brightness.light),
-              ),
-              darkTheme: ThemeData(
-                useMaterial3: true,
-                textTheme: _typography.white,
-                colorScheme: darkDynamic ?? ColorScheme.fromSeed(seedColor: Colors.purple, brightness: Brightness.dark),
-              ),
-              themeMode: ThemeMode.values[widget.settingsClient.currentSettings.themeMode.valueOrDefault],
-              home: Builder(
-                // Builder is necessary here since we need a context which has access to the ClientHolder
-                builder: (context) {
-                  showUpdateDialogOnFirstBuild(context);
-                  final clientHolder = ClientHolder.of(context);
-                  return _authData.isAuthenticated
-                      ? MultiProvider(
-                          providers: [
-                            ChangeNotifierProvider(
-                              create: (context) => MessagingClient(
-                                apiClient: clientHolder.apiClient,
-                                settingsClient: clientHolder.settingsClient,
-                                notificationClient: clientHolder.notificationClient,
+            builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+              final useSystemColor = widget.settingsClient.currentSettings.useSystemColor.valueOrDefault;
+              final customColor = Color(widget.settingsClient.currentSettings.customColor.valueOrDefault ?? Colors.blue.value);
+              
+              return MaterialApp(
+                debugShowCheckedModeBanner: true,
+                title: 'open_contacts',
+                theme: ThemeData(
+                  useMaterial3: true,
+                  textTheme: _typography.black,
+                  colorScheme: useSystemColor 
+                      ? (lightDynamic ?? ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.light))
+                      : ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.light),
+                ),
+                darkTheme: ThemeData(
+                  useMaterial3: true,
+                  textTheme: _typography.white,
+                  colorScheme: useSystemColor
+                      ? (darkDynamic ?? ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.dark))
+                      : ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.dark),
+                ),
+                themeMode: ThemeMode.values[widget.settingsClient.currentSettings.themeMode.valueOrDefault],
+                home: Builder(
+                  // Builder is necessary here since we need a context which has access to the ClientHolder
+                  builder: (context) {
+                    showUpdateDialogOnFirstBuild(context);
+                    final clientHolder = ClientHolder.of(context);
+                    return _authData.isAuthenticated
+                        ? MultiProvider(
+                            providers: [
+                              ChangeNotifierProvider(
+                                create: (context) => MessagingClient(
+                                  apiClient: clientHolder.apiClient,
+                                  settingsClient: clientHolder.settingsClient,
+                                  notificationClient: clientHolder.notificationClient,
+                                ),
                               ),
-                            ),
-                            ChangeNotifierProvider(
-                              create: (context) => SessionClient(
-                                apiClient: clientHolder.apiClient,
-                                settingsClient: clientHolder.settingsClient,
+                              ChangeNotifierProvider(
+                                create: (context) => SessionClient(
+                                  apiClient: clientHolder.apiClient,
+                                  settingsClient: clientHolder.settingsClient,
+                                ),
                               ),
-                            ),
-                            ChangeNotifierProvider(
-                              create: (context) => InventoryClient(
-                                apiClient: clientHolder.apiClient,
+                              ChangeNotifierProvider(
+                                create: (context) => InventoryClient(
+                                  apiClient: clientHolder.apiClient,
+                                ),
+                              )
+                            ],
+                            child: AnnotatedRegion<SystemUiOverlayStyle>(
+                              value: SystemUiOverlayStyle(
+                                statusBarColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                               ),
-                            )
-                          ],
-                          child: AnnotatedRegion<SystemUiOverlayStyle>(
-                            value: SystemUiOverlayStyle(
-                              statusBarColor: Theme.of(context).colorScheme.surfaceVariant,
+                              child: const Home(),
                             ),
-                            child: const Home(),
-                          ),
-                        )
-                      : LoginScreen(
-                          onLoginSuccessful: (AuthenticationData authData) async {
-                            if (authData.isAuthenticated) {
-                              setState(() {
-                                _authData = authData;
-                              });
-                            }
-                          },
-                        );
-                },
-              ),
-            ),
+                          )
+                        : LoginScreen(
+                            onLoginSuccessful: (AuthenticationData authData) async {
+                              if (authData.isAuthenticated) {
+                                setState(() {
+                                  _authData = authData;
+                                });
+                              }
+                            },
+                          );
+                  },
+                ),
+              );
+            },
           ),
         );
       }),

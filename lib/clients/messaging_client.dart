@@ -5,21 +5,47 @@ import 'package:flutter/widgets.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:OpenContacts/apis/contact_api.dart';
-import 'package:OpenContacts/apis/message_api.dart';
-import 'package:OpenContacts/apis/session_api.dart';
-import 'package:OpenContacts/apis/user_api.dart';
-import 'package:OpenContacts/clients/api_client.dart';
-import 'package:OpenContacts/clients/notification_client.dart';
-import 'package:OpenContacts/clients/settings_client.dart';
-import 'package:OpenContacts/crypto_helper.dart';
-import 'package:OpenContacts/hub_manager.dart';
-import 'package:OpenContacts/models/hub_events.dart';
-import 'package:OpenContacts/models/message.dart';
-import 'package:OpenContacts/models/session.dart';
-import 'package:OpenContacts/models/users/friend.dart';
-import 'package:OpenContacts/models/users/online_status.dart';
-import 'package:OpenContacts/models/users/user_status.dart';
+import 'package:open_contacts/apis/contact_api.dart';
+import 'package:open_contacts/apis/message_api.dart';
+import 'package:open_contacts/apis/session_api.dart';
+import 'package:open_contacts/apis/user_api.dart';
+import 'package:open_contacts/clients/api_client.dart';
+import 'package:open_contacts/clients/notification_client.dart';
+import 'package:open_contacts/clients/settings_client.dart';
+import 'package:open_contacts/crypto_helper.dart';
+import 'package:open_contacts/hub_manager.dart';
+import 'package:open_contacts/models/hub_events.dart';
+import 'package:open_contacts/models/message.dart';
+import 'package:open_contacts/models/session.dart';
+import 'package:open_contacts/models/users/friend.dart';
+import 'package:open_contacts/models/users/online_status.dart';
+import 'package:open_contacts/models/users/user_status.dart';
+import 'package:flutter/material.dart';
+
+enum ViewMode {
+  list,
+  details,
+  tiles,
+  icons;
+
+  IconData get icon {
+    return switch (this) {
+      ViewMode.list => Icons.list,
+      ViewMode.details => Icons.view_agenda,
+      ViewMode.tiles => Icons.grid_view,
+      ViewMode.icons => Icons.apps,
+    };
+  }
+
+  String get label {
+    return switch (this) {
+      ViewMode.list => "List",
+      ViewMode.details => "Details",
+      ViewMode.tiles => "Tiles",
+      ViewMode.icons => "Icons",
+    };
+  }
+}
 
 class MessagingClient extends ChangeNotifier {
   static const Duration _autoRefreshDuration = Duration(seconds: 10);
@@ -48,6 +74,16 @@ class MessagingClient extends ChangeNotifier {
 
   UserStatus get userStatus => _userStatus;
 
+  bool _disposed = false;
+  bool get isDisposed => _disposed;
+
+  ViewMode _viewMode = ViewMode.list;
+  ViewMode get viewMode => _viewMode;
+  set viewMode(ViewMode value) {
+    _viewMode = value;
+    notifyListeners();
+  }
+
   MessagingClient(
       {required ApiClient apiClient,
       required NotificationClient notificationClient,
@@ -66,6 +102,7 @@ class MessagingClient extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     debugPrint("mClient disposed: $hashCode");
     _autoRefresh?.cancel();
     _statusHeartbeat?.cancel();
@@ -328,6 +365,7 @@ class MessagingClient extends ChangeNotifier {
   }
 
   void _onMessageSent(List args) {
+    if (_disposed) return;
     final msg = args[0];
     final message = Message.fromMap(msg, withState: MessageState.sent);
     final cache = getUserMessageCache(message.recipientId) ?? _createUserMessageCache(message.recipientId);
@@ -362,6 +400,8 @@ class MessagingClient extends ChangeNotifier {
   }
 
   void _onReceiveStatusUpdate(List args) {
+    if (!hasListeners) return;
+    
     final statusUpdate = args[0];
     var status = UserStatus.fromMap(statusUpdate);
     final sessionMap = createSessionMap(status.hashSalt);
@@ -381,8 +421,10 @@ class MessagingClient extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _onReceiveSessionUpdate(List args) {
-    final sessionUpdate = args[0];
+  void _onReceiveSessionUpdate(dynamic data) {
+    if (!hasListeners) return;
+    
+    final sessionUpdate = data[0];
     final session = Session.fromMap(sessionUpdate);
     _sessionMap[session.id] = session;
     notifyListeners();

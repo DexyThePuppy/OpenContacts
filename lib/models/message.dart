@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:developer';
+import 'dart:convert';
 
-import 'package:OpenContacts/clients/api_client.dart';
-import 'package:OpenContacts/apis/message_api.dart';
-import 'package:OpenContacts/auxiliary.dart';
-import 'package:OpenContacts/string_formatter.dart';
+import 'package:open_contacts/clients/api_client.dart';
+import 'package:open_contacts/apis/message_api.dart';
+import 'package:open_contacts/auxiliary.dart';
+import 'package:open_contacts/string_formatter.dart';
 import 'package:uuid/uuid.dart';
 
 enum MessageType {
@@ -108,6 +109,16 @@ class Message implements Comparable {
   int compareTo(covariant Message other) {
     return other.sendTime.compareTo(sendTime);
   }
+
+  AudioClipContent? get audioContent {
+    if (type != MessageType.sound) return null;
+    try {
+      return AudioClipContent.fromMap(jsonDecode(content));
+    } catch (e) {
+      log("Failed to parse audio content: $e");
+      return null;
+    }
+  }
 }
 
 class MessageCache {
@@ -177,10 +188,15 @@ class AudioClipContent {
 
   const AudioClipContent({required this.id, required this.assetUri});
 
+  String get httpUri {
+    if (assetUri.isEmpty) return '';
+    return Aux.resdbToHttp(assetUri);
+  }
+
   factory AudioClipContent.fromMap(Map map) {
     return AudioClipContent(
-      id: map["id"],
-      assetUri: map["assetUri"],
+      id: map["id"] ?? '',
+      assetUri: map["assetUri"] ?? '',
     );
   }
 }

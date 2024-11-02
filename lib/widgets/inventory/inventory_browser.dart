@@ -3,15 +3,15 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
-import 'package:photo_view/photo_view.dart';
+// import 'package:photo_view/photo_view.dart';
 import 'package:provider/provider.dart';
-import 'package:OpenContacts/auxiliary.dart';
-import 'package:OpenContacts/clients/inventory_client.dart';
-import 'package:OpenContacts/models/inventory/resonite_directory.dart';
-import 'package:OpenContacts/models/records/record.dart';
-import 'package:OpenContacts/widgets/default_error_widget.dart';
-import 'package:OpenContacts/widgets/inventory/object_inventory_tile.dart';
-import 'package:OpenContacts/widgets/inventory/path_inventory_tile.dart';
+import 'package:open_contacts/auxiliary.dart';
+import 'package:open_contacts/clients/inventory_client.dart';
+import 'package:open_contacts/models/inventory/resonite_directory.dart';
+import 'package:open_contacts/models/records/record.dart';
+import 'package:open_contacts/widgets/default_error_widget.dart';
+import 'package:open_contacts/widgets/inventory/object_inventory_tile.dart';
+import 'package:open_contacts/widgets/inventory/path_inventory_tile.dart';
 
 class InventoryBrowser extends StatefulWidget {
   const InventoryBrowser({super.key});
@@ -41,14 +41,13 @@ class _InventoryBrowserState extends State<InventoryBrowser> with AutomaticKeepA
           future: iClient.directoryFuture,
           builder: (context, snapshot) {
             final currentDir = snapshot.data;
-            return WillPopScope(
-              onWillPop: () async {
-                // Allow pop when at root or not loaded
-                if (currentDir?.isRoot ?? true) {
-                  return true;
+            return PopScope(
+              canPop: currentDir?.isRoot ?? true,
+              // ignore: deprecated_member_use
+              onPopInvoked: (didPop) {
+                if (!didPop) {
+                  iClient.navigateUp();
                 }
-                iClient.navigateUp();
-                return false;
               },
               child: RefreshIndicator(
                 onRefresh: () async {

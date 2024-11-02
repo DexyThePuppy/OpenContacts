@@ -1,7 +1,7 @@
 
 import 'dart:typed_data';
 
-import 'package:OpenContacts/models/records/resonite_db_asset.dart';
+import 'package:open_contacts/models/records/resonite_db_asset.dart';
 import 'package:path/path.dart';
 
 class AssetDigest {

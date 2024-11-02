@@ -1,9 +1,10 @@
 import 'package:collection/collection.dart';
-import 'package:OpenContacts/apis/session_api.dart';
-import 'package:OpenContacts/clients/api_client.dart';
-import 'package:OpenContacts/clients/settings_client.dart';
-import 'package:OpenContacts/models/session.dart';
+import 'package:open_contacts/apis/session_api.dart';
+import 'package:open_contacts/clients/api_client.dart';
+import 'package:open_contacts/clients/settings_client.dart';
+import 'package:open_contacts/models/session.dart';
 import 'package:flutter/foundation.dart';
+import 'package:open_contacts/models/view_modes.dart';
 
 class SessionClient extends ChangeNotifier {
   final ApiClient apiClient;
@@ -12,6 +13,8 @@ class SessionClient extends ChangeNotifier {
   Future<List<Session>>? _sessionsFuture;
 
   SessionFilterSettings _filterSettings = SessionFilterSettings.empty();
+
+  ViewMode _viewMode = ViewMode.list;
 
   SessionClient({required this.apiClient, required this.settingsClient}) {
     _filterSettings = SessionFilterSettings(
@@ -31,6 +34,13 @@ class SessionClient extends ChangeNotifier {
   set filterSettings(value) {
     _filterSettings = value;
     reloadSessions();
+  }
+
+  ViewMode get viewMode => _viewMode;
+
+  set viewMode(ViewMode mode) {
+    _viewMode = mode;
+    notifyListeners();
   }
 
   void initSessions() {

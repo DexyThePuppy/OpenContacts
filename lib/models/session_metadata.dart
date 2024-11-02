@@ -1,4 +1,4 @@
-import 'package:OpenContacts/models/session.dart';
+import 'package:open_contacts/models/session.dart';
 import 'package:intl/intl.dart';
 
 class SessionMetadata {

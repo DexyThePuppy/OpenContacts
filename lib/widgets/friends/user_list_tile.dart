@@ -1,8 +1,8 @@
-import 'package:OpenContacts/apis/contact_api.dart';
-import 'package:OpenContacts/auxiliary.dart';
-import 'package:OpenContacts/client_holder.dart';
-import 'package:OpenContacts/models/users/user.dart';
-import 'package:OpenContacts/widgets/generic_avatar.dart';
+import 'package:open_contacts/apis/contact_api.dart';
+import 'package:open_contacts/auxiliary.dart';
+import 'package:open_contacts/client_holder.dart';
+import 'package:open_contacts/models/users/user.dart';
+import 'package:open_contacts/widgets/generic_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -50,8 +50,12 @@ class _UserListTileState extends State<UserListTile> {
         icon: _localAdded ? const Icon(Icons.person_remove) : const Icon(Icons.person_add),
         style: style,
         onPressed: _loading ? null : () async {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Sorry, this feature is unavailable.")));
-          return;
+          // Remove or comment out this block if you want the feature to work
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   const SnackBar(content: Text("Sorry, this feature is unavailable."))
+          // );
+          // return;
+          
           setState(() {
             _loading = true;
           });

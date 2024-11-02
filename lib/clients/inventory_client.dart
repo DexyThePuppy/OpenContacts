@@ -1,10 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:OpenContacts/apis/record_api.dart';
-import 'package:OpenContacts/clients/api_client.dart';
-import 'package:OpenContacts/models/inventory/resonite_directory.dart';
-import 'package:OpenContacts/models/records/record.dart';
+import 'package:open_contacts/apis/record_api.dart';
+import 'package:open_contacts/clients/api_client.dart';
+import 'package:open_contacts/models/inventory/resonite_directory.dart';
+import 'package:open_contacts/models/records/record.dart';
+import 'package:open_contacts/models/view_modes.dart';
 
 enum SortMode {
   name,
@@ -42,6 +43,15 @@ class InventoryClient extends ChangeNotifier {
   Future<ResoniteDirectory>? _currentDirectory;
   SortMode _sortMode = SortMode.resonite;
   bool _sortReverse = false;
+
+  ViewMode _viewMode = ViewMode.list;
+  ViewMode get viewMode => _viewMode;
+  set viewMode(ViewMode mode) {
+    if (_viewMode != mode) {
+      _viewMode = mode;
+      notifyListeners();
+    }
+  }
 
   InventoryClient({required this.apiClient});
 

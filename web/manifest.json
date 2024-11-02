@@ -1,5 +1,5 @@
 {
-    "name": "OpenContacts",
+    "name": "open_contacts",
     "short_name": "opc",
     "start_url": ".",
     "display": "standalone",

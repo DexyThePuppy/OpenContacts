@@ -1,4 +1,4 @@
-import 'package:OpenContacts/auxiliary.dart';
+import 'package:open_contacts/auxiliary.dart';
 
 class CloudVariable {
   final String ownerId;

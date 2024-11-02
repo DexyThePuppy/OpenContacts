@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:OpenContacts/models/settings.dart';
+import 'package:open_contacts/models/settings.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 

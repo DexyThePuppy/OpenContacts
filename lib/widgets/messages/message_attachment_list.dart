@@ -56,7 +56,7 @@ class _MessageAttachmentListState extends State<MessageAttachmentList> {
                 colors: [Colors.transparent, Colors.transparent, Colors.transparent, Theme
                     .of(context)
                     .colorScheme
-                    .surfaceVariant
+                    .surfaceContainerHighest 
                 ],
                 stops: [0.0, 0.0, _showShadow ? 0.90 : 1.0, 1.0], // 10% purple, 80% transparent, 10% purple
               ).createShader(bounds);
@@ -245,7 +245,7 @@ class _MessageAttachmentListState extends State<MessageAttachmentList> {
           ) : const SizedBox.shrink(),
         ),
         Container(
-          color: Theme.of(context).colorScheme.surfaceVariant,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest ,
           child: IconButton(onPressed: () {
             setState(() {
               _popupIsOpen = !_popupIsOpen;

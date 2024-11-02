@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:OpenContacts/apis/user_api.dart';
-import 'package:OpenContacts/client_holder.dart';
-import 'package:OpenContacts/clients/messaging_client.dart';
-import 'package:OpenContacts/models/users/user.dart';
-import 'package:OpenContacts/widgets/default_error_widget.dart';
-import 'package:OpenContacts/widgets/friends/user_list_tile.dart';
+import 'package:open_contacts/apis/user_api.dart';
+import 'package:open_contacts/client_holder.dart';
+import 'package:open_contacts/clients/messaging_client.dart';
+import 'package:open_contacts/models/users/user.dart';
+import 'package:open_contacts/widgets/default_error_widget.dart';
+import 'package:open_contacts/widgets/friends/user_list_tile.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

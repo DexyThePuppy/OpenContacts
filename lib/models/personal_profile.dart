@@ -1,6 +1,6 @@
-import 'package:OpenContacts/auxiliary.dart';
-import 'package:OpenContacts/models/users/entitlement.dart';
-import 'package:OpenContacts/models/users/user_profile.dart';
+import 'package:open_contacts/auxiliary.dart';
+import 'package:open_contacts/models/users/entitlement.dart';
+import 'package:open_contacts/models/users/user_profile.dart';
 
 class PersonalProfile {
   final String id;

@@ -1,9 +1,11 @@
-import 'package:OpenContacts/client_holder.dart';
+import 'package:open_contacts/client_holder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:open_contacts/clients/settings_client.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -20,7 +22,48 @@ class SettingsPage extends StatelessWidget {
             onChanged: (value) async =>
                 await sClient.changeSettings(sClient.currentSettings.copyWith(notificationsDenied: !value)),
           ),
+          ListTile(
+            enabled: !sClient.currentSettings.notificationsDenied.valueOrDefault,
+            trailing: const Icon(Icons.notification_add),
+            title: const Text("Send Test Notification"),
+            onTap: () async {
+              await ClientHolder.of(context).notificationClient.showNotification(
+                title: "Test Notification",
+                body: "This is a test notification! Woof! 🐾",
+              );
+            },
+          ),
           const ListSectionHeader(leadingText: "Appearance"),
+          BooleanSettingsTile(
+            title: "Use System Accent Color",
+            initialState: sClient.currentSettings.useSystemColor.valueOrDefault,
+            onChanged: (value) async {
+              await sClient.changeSettings(
+                sClient.currentSettings.copyWith(
+                  useSystemColor: value,
+                  customColor: !value 
+                      ? sClient.currentSettings.customColor.valueOrDefault ?? Colors.blue.value
+                      : null
+                )
+              );
+              if (context.mounted) {
+                Phoenix.rebirth(context);
+              }
+            },
+          ),
+          ListTile(
+            trailing: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: Color(sClient.currentSettings.customColor.valueOrDefault ?? Colors.blue.value),
+                shape: BoxShape.circle,
+                border: Border.all(color: Theme.of(context).dividerColor),
+              ),
+            ),
+            title: const Text("Accent Color"),
+            onTap: () => _showColorPicker(context, sClient),
+          ),
           ListTile(
             trailing: StatefulBuilder(builder: (context, setState) {
               return DropdownButton<ThemeMode>(
@@ -28,7 +71,7 @@ class SettingsPage extends StatelessWidget {
                     .map((mode) => DropdownMenuItem<ThemeMode>(
                           value: mode,
                           child: Text(
-                            "${toBeginningOfSentenceCase(mode.name)}",
+                            toBeginningOfSentenceCase(mode.name),
                           ),
                         ))
                     .toList(),
@@ -76,12 +119,15 @@ class SettingsPage extends StatelessWidget {
             trailing: const Icon(Icons.info_outline),
             title: const Text("About OpenContacts"),
             onTap: () async {
+              final version = await PackageInfo.fromPlatform();
+              if (!context.mounted) return;
+              
               showAboutDialog(
                 context: context,
-                applicationVersion: (await PackageInfo.fromPlatform()).version,
+                applicationVersion: version.version,
                 applicationIcon: InkWell(
                   onTap: () async {
-                    if (!await launchUrl(Uri.parse("https://git.mrdab.vore.media/ThatOneJackalGuy/OpenContacts"),
+                    if (!await launchUrl(Uri.parse("https://git.mrdab.vore.media/ThatOneJackalGuy/Opencontacts"),
                         mode: LaunchMode.externalApplication)) {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context)
@@ -101,6 +147,45 @@ class SettingsPage extends StatelessWidget {
           )
         ],
       );
+  }
+
+  void _showColorPicker(BuildContext context, SettingsClient sClient) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        Color currentColor = Color(sClient.currentSettings.customColor.valueOrDefault ?? Colors.blue.value);
+        return AlertDialog(
+          title: const Text('Pick a color'),
+          content: SingleChildScrollView(
+            child: ColorPicker(
+              pickerColor: currentColor,
+              onColorChanged: (Color color) {
+                currentColor = color;
+              },
+              pickerAreaHeightPercent: 0.8,
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              child: const Text('Save'),
+              onPressed: () async {
+                await sClient.changeSettings(
+                  sClient.currentSettings.copyWith(customColor: currentColor.value),
+                );
+                if (context.mounted) {
+                  Phoenix.rebirth(context);
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 

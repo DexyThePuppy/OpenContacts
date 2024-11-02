@@ -90,13 +90,13 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "de.voidspace" "\0"
-            VALUE "FileDescription", "recon" "\0"
+            VALUE "FileDescription", "Resonite Contacts App" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "recon" "\0"
+            VALUE "InternalName", "Dexys Bone" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2023 de.voidspace. All rights reserved." "\0"
             VALUE "OriginalFilename", "recon.exe" "\0"
-            VALUE "ProductName", "recon" "\0"
-            VALUE "ProductVersion", VERSION_AS_STRING "\0"
+            VALUE "ProductName", "<size=10000%><color=#FFB3BAFF>🐶</color> <color=#FFD9B3FF><b>D</color><color=#FFFFB3FF>e</color><color=#BAFFB3FF>x</color><color=#B3FFFFFF>y</color><color=#D9B3FFFF>'s</color> <color=#FFB3F9FF>R</color><color=#FFB3BAFF>e</color><color=#FFD9B3FF>s</color><color=#FFFFB3FF>o</color><color=#BAFFB3FF>n</color><color=#B3FFFFFF>i</color><color=#D9B3FFFF>t</color><color=#FFB3F9FF>e</color> <color=#FFB3BAFF>A</color><color=#FFD9B3FF>p</color><color=#FFFFB3FF>p</color> <color=#BAFFB3FF>🐕</color></b></size>" "\0"
+            VALUE "ProductVersion", "<size=0%>🐾</size>" "\0"
         END
     END
     BLOCK "VarFileInfo"

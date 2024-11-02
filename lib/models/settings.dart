@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:OpenContacts/models/sem_ver.dart';
-import 'package:OpenContacts/models/users/online_status.dart';
+import 'package:open_contacts/models/sem_ver.dart';
+import 'package:open_contacts/models/users/online_status.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -44,6 +44,10 @@ class Settings {
   final SettingsEntry<bool> sessionViewLastIncludeEnded;
   final SettingsEntry<bool> sessionViewLastIncludeEmpty;
   final SettingsEntry<bool> sessionViewLastIncludeIncompatible;
+  final SettingsEntry<int> seedColor;
+  final SettingsEntry<int?> customColor;
+  final SettingsEntry<bool> useSystemColor;
+  final SettingsEntry<int> lastSelectedPage;
 
   Settings({
     SettingsEntry<bool>? notificationsDenied,
@@ -55,6 +59,10 @@ class Settings {
     SettingsEntry<bool>? sessionViewLastIncludeEnded,
     SettingsEntry<bool>? sessionViewLastIncludeEmpty,
     SettingsEntry<bool>? sessionViewLastIncludeIncompatible,
+    SettingsEntry<int>? seedColor,
+    SettingsEntry<int?>? customColor,
+    SettingsEntry<bool>? useSystemColor,
+    SettingsEntry<int>? lastSelectedPage,
   })  : notificationsDenied = notificationsDenied ?? const SettingsEntry<bool>(deflt: false),
         lastOnlineStatus = lastOnlineStatus ?? SettingsEntry<int>(deflt: OnlineStatus.online.index),
         themeMode = themeMode ?? SettingsEntry<int>(deflt: ThemeMode.dark.index),
@@ -64,7 +72,11 @@ class Settings {
         sessionViewLastIncludeEnded = sessionViewLastIncludeEnded ?? const SettingsEntry<bool>(deflt: false),
         sessionViewLastIncludeEmpty = sessionViewLastIncludeEmpty ?? const SettingsEntry<bool>(deflt: true),
         sessionViewLastIncludeIncompatible =
-            sessionViewLastIncludeIncompatible ?? const SettingsEntry<bool>(deflt: false);
+            sessionViewLastIncludeIncompatible ?? const SettingsEntry<bool>(deflt: false),
+        seedColor = seedColor ?? const SettingsEntry<int>(deflt: 0),
+        customColor = customColor ?? const SettingsEntry<int?>(deflt: null),
+        useSystemColor = useSystemColor ?? const SettingsEntry<bool>(deflt: true),
+        lastSelectedPage = lastSelectedPage ?? const SettingsEntry<int>(deflt: 0);
 
   factory Settings.fromMap(Map map) {
     return Settings(
@@ -77,6 +89,10 @@ class Settings {
       sessionViewLastIncludeEnded: getEntryOrNull<bool>(map["sessionViewLastIncludeEnded"]),
       sessionViewLastIncludeEmpty: getEntryOrNull<bool>(map["sessionViewLastIncludeEmpty"]),
       sessionViewLastIncludeIncompatible: getEntryOrNull<bool>(map["sessionViewLastIncludeIncompatible"]),
+      seedColor: getEntryOrNull<int>(map["seedColor"]),
+      customColor: getEntryOrNull<int?>(map["customColor"]),
+      useSystemColor: getEntryOrNull<bool>(map["useSystemColor"]),
+      lastSelectedPage: getEntryOrNull<int>(map["lastSelectedPage"]),
     );
   }
 
@@ -100,6 +116,10 @@ class Settings {
       "sessionViewLastIncludeEnded": sessionViewLastIncludeEnded.toMap(),
       "sessionViewLastIncludeEmpty": sessionViewLastIncludeEmpty.toMap(),
       "sessionViewLastIncludeIncompatible": sessionViewLastIncludeIncompatible.toMap(),
+      "seedColor": seedColor.toMap(),
+      "customColor": customColor.toMap(),
+      "useSystemColor": useSystemColor.toMap(),
+      "lastSelectedPage": lastSelectedPage.toMap(),
     };
   }
 
@@ -115,6 +135,10 @@ class Settings {
     bool? sessionViewLastIncludeEnded,
     bool? sessionViewLastIncludeEmpty,
     bool? sessionViewLastIncludeIncompatible,
+    int? seedColor,
+    int? customColor,
+    bool? useSystemColor,
+    int? lastSelectedPage,
   }) {
     return Settings(
       notificationsDenied: this.notificationsDenied.passThrough(notificationsDenied),
@@ -127,6 +151,10 @@ class Settings {
       sessionViewLastIncludeEmpty: this.sessionViewLastIncludeEmpty.passThrough(sessionViewLastIncludeEmpty),
       sessionViewLastIncludeIncompatible:
           this.sessionViewLastIncludeIncompatible.passThrough(sessionViewLastIncludeIncompatible),
+      seedColor: this.seedColor.passThrough(seedColor),
+      customColor: this.customColor.passThrough(customColor),
+      useSystemColor: this.useSystemColor.passThrough(useSystemColor),
+      lastSelectedPage: this.lastSelectedPage.passThrough(lastSelectedPage),
     );
   }
 }

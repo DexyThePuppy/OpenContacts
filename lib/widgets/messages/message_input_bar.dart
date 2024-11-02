@@ -7,14 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:OpenContacts/apis/record_api.dart';
-import 'package:OpenContacts/auxiliary.dart';
-import 'package:OpenContacts/client_holder.dart';
-import 'package:OpenContacts/clients/api_client.dart';
-import 'package:OpenContacts/clients/messaging_client.dart';
-import 'package:OpenContacts/models/message.dart';
-import 'package:OpenContacts/models/users/friend.dart';
-import 'package:OpenContacts/widgets/messages/message_attachment_list.dart';
+import 'package:open_contacts/apis/record_api.dart';
+import 'package:open_contacts/auxiliary.dart';
+import 'package:open_contacts/client_holder.dart';
+import 'package:open_contacts/clients/api_client.dart';
+import 'package:open_contacts/clients/messaging_client.dart';
+import 'package:open_contacts/models/message.dart';
+import 'package:open_contacts/models/users/friend.dart';
+import 'package:open_contacts/widgets/messages/message_attachment_list.dart';
 import 'package:record/record.dart';
 
 class MessageInputBar extends StatefulWidget {
@@ -203,7 +203,7 @@ class _MessageInputBarState extends State<MessageInputBar> {
       child: Container(
         decoration: BoxDecoration(
           border: const Border(top: BorderSide(width: 1, color: Colors.black)),
-          color: Theme.of(context).colorScheme.surfaceVariant,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest ,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: SafeArea(
@@ -213,7 +213,7 @@ class _MessageInputBarState extends State<MessageInputBar> {
               if (_isSending && _sendProgress != null) LinearProgressIndicator(value: _sendProgress),
               Container(
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest ,
                 ),
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 200),

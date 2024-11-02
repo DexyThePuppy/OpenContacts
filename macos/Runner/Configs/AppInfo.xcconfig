@@ -5,10 +5,10 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = recon
+PRODUCT_NAME = OpenContacts
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = me.voidspace.recon
+PRODUCT_BUNDLE_IDENTIFIER = me.voidspace.OpenContacts
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2023 me.voidspace. All rights reserved.

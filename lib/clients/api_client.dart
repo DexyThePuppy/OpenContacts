@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:OpenContacts/models/authentication_data.dart';
+import 'package:open_contacts/models/authentication_data.dart';
 import 'package:logging/logging.dart';
 import 'package:uuid/uuid.dart';
 
@@ -16,6 +16,8 @@ class ApiClient {
   static const String tokenKey = "token";
   static const String passwordKey = "password";
   static const String uidKey = "uid";
+  static const String clientName = "open_contacts";
+  static const String clientVersion = "0.0.1";
 
   ApiClient({required AuthenticationData authenticationData, required this.onLogout})
       : _authenticationData = authenticationData;
@@ -48,6 +50,7 @@ class ApiClient {
       },
       "rememberMe": rememberMe,
       "secretMachineId": const Uuid().v4(),
+      "clientType": "$clientName v$clientVersion",
     };
     final uid = const Uuid().v4().replaceAll("-", "");
     final response = await http.post(

@@ -1,4 +1,4 @@
-import 'package:OpenContacts/models/records/asset_diff.dart';
+import 'package:open_contacts/models/records/asset_diff.dart';
 
 enum RecordPreprocessState
 {

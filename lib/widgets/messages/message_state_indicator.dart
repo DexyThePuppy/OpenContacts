@@ -1,5 +1,5 @@
-import 'package:OpenContacts/client_holder.dart';
-import 'package:OpenContacts/models/message.dart';
+import 'package:open_contacts/client_holder.dart';
+import 'package:open_contacts/models/message.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 

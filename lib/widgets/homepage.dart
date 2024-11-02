@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:OpenContacts/widgets/friends/friends_list.dart';
-import 'package:OpenContacts/widgets/friends/friends_list_app_bar.dart';
-import 'package:OpenContacts/widgets/inventory/inventory_browser.dart';
-import 'package:OpenContacts/widgets/inventory/inventory_browser_app_bar.dart';
-import 'package:OpenContacts/widgets/sessions/session_list.dart';
-import 'package:OpenContacts/widgets/sessions/session_list_app_bar.dart';
-import 'package:OpenContacts/widgets/settings_app_bar.dart';
-import 'package:OpenContacts/widgets/settings_page.dart';
+import 'package:open_contacts/widgets/friends/friends_list.dart';
+import 'package:open_contacts/widgets/friends/friends_list_app_bar.dart';
+import 'package:open_contacts/widgets/inventory/inventory_browser.dart';
+import 'package:open_contacts/widgets/inventory/inventory_browser_app_bar.dart';
+import 'package:open_contacts/widgets/sessions/session_list.dart';
+import 'package:open_contacts/widgets/sessions/session_list_app_bar.dart';
+import 'package:open_contacts/widgets/settings_app_bar.dart';
+import 'package:open_contacts/widgets/settings_page.dart';
+import 'package:open_contacts/client_holder.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -23,8 +24,41 @@ class _HomeState extends State<Home> {
     SettingsAppBar()
   ];
   final PageController _pageController = PageController();
+  late int _selectedPage = 0;
 
-  int _selectedPage = 0;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final settingsClient = ClientHolder.of(context).settingsClient;
+      setState(() {
+        _selectedPage = settingsClient.currentSettings.lastSelectedPage.valueOrDefault;
+      });
+      _pageController.jumpToPage(_selectedPage);
+    });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _changePage(int index) async {
+    final settingsClient = ClientHolder.of(context).settingsClient;
+    await settingsClient.changeSettings(
+      settingsClient.currentSettings.copyWith(lastSelectedPage: index)
+    );
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+    );
+    setState(() {
+      _selectedPage = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,16 +83,7 @@ class _HomeState extends State<Home> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedPage,
-        onDestinationSelected: (index) {
-          _pageController.animateToPage(
-            index,
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOut,
-          );
-          setState(() {
-            _selectedPage = index;
-          });
-        },
+        onDestinationSelected: _changePage,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.public),

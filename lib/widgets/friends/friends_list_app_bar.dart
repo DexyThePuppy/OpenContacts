@@ -1,9 +1,9 @@
 import 'package:collection/collection.dart';
-import 'package:OpenContacts/client_holder.dart';
-import 'package:OpenContacts/clients/messaging_client.dart';
-import 'package:OpenContacts/models/users/online_status.dart';
-import 'package:OpenContacts/widgets/friends/user_search.dart';
-import 'package:OpenContacts/widgets/my_profile_dialog.dart';
+import 'package:open_contacts/client_holder.dart';
+import 'package:open_contacts/clients/messaging_client.dart' show MessagingClient, ViewMode;
+import 'package:open_contacts/models/users/online_status.dart';
+import 'package:open_contacts/widgets/friends/user_search.dart';
+import 'package:open_contacts/widgets/my_profile_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -23,6 +23,16 @@ class _FriendsListAppBarState extends State<FriendsListAppBar> with AutomaticKee
     return AppBar(
       title: const Text("Contacts"),
       actions: [
+        Consumer<MessagingClient>(
+          builder: (context, client, _) => IconButton(
+            icon: Icon(client.viewMode.icon),
+            onPressed: () {
+              client.viewMode = client.viewMode == ViewMode.list 
+                ? ViewMode.tiles 
+                : ViewMode.list;
+            },
+          ),
+        ),
         Consumer<MessagingClient>(builder: (context, client, _) {
           return PopupMenuButton<OnlineStatus>(
             child: Row(
@@ -84,7 +94,7 @@ class _FriendsListAppBarState extends State<FriendsListAppBar> with AutomaticKee
               await itemDef.onTap();
             },
             itemBuilder: (BuildContext context) => [
-              /*MenuItemDefinition(
+              MenuItemDefinition(
                 name: "Add Users",
                 icon: Icons.person_add,
                 onTap: () async {
@@ -98,8 +108,7 @@ class _FriendsListAppBarState extends State<FriendsListAppBar> with AutomaticKee
                     ),
                   );
                 },
-              ),*/ 
-              //TODO: Add users API 
+              ),
               MenuItemDefinition(
                 name: "My Profile",
                 icon: Icons.person,

@@ -4,7 +4,7 @@
 <dict>
 	<key>keychain-access-groups</key>
 	<array>
-		<string>$(AppIdentifierPrefix)ch.isota.recon</string>
+		<string>$(AppIdentifierPrefix)ch.isota.OpenContacts</string>
 	</array>
 </dict>
 </plist>

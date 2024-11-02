@@ -1,8 +1,8 @@
-import 'package:OpenContacts/auxiliary.dart';
-import 'package:OpenContacts/models/message.dart';
-import 'package:OpenContacts/models/records/asset_digest.dart';
-import 'package:OpenContacts/models/records/resonite_db_asset.dart';
-import 'package:OpenContacts/string_formatter.dart';
+import 'package:open_contacts/auxiliary.dart';
+import 'package:open_contacts/models/message.dart';
+import 'package:open_contacts/models/records/asset_digest.dart';
+import 'package:open_contacts/models/records/resonite_db_asset.dart';
+import 'package:open_contacts/string_formatter.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
@@ -152,7 +152,7 @@ class Record {
       combinedRecordId: combinedRecordId,
       assetUri: assetUri,
       name: filename,
-      tags: ([filename, "message_item", "message_id:${Message.generateId()}", "recon"] + (extraTags ?? []))
+      tags: ([filename, "message_item", "message_id:${Message.generateId()}", "OpenContacts"] + (extraTags ?? []))
           .unique(),
       recordType: recordType,
       thumbnailUri: thumbnailUri,

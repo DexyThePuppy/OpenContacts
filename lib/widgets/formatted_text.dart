@@ -1,4 +1,4 @@
-import 'package:OpenContacts/string_formatter.dart';
+import 'package:open_contacts/string_formatter.dart';
 import 'package:flutter/material.dart';
 
 class FormattedText extends StatelessWidget {
