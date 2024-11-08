@@ -24,6 +24,7 @@ import 'package:open_contacts/models/sem_ver.dart';
 import 'package:open_contacts/widgets/homepage.dart';
 import 'package:open_contacts/widgets/login_screen.dart';
 import 'package:open_contacts/widgets/update_notifier.dart';
+import 'package:open_contacts/models/contact_tabs_config.dart';
 
 import 'models/authentication_data.dart';
 
@@ -161,82 +162,94 @@ class _ReconState extends State<Recon> {
         return ClientHolder(
           settingsClient: widget.settingsClient,
           authenticationData: _authData,
-          onLogout: () {
-            setState(() {
-              _authData = AuthenticationData.unauthenticated();
-            });
-            Phoenix.rebirth(context);
-          },
-          child: DynamicColorBuilder(
-            builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-              final useSystemColor = widget.settingsClient.currentSettings.useSystemColor.valueOrDefault;
-              final customColor = Color(widget.settingsClient.currentSettings.customColor.valueOrDefault ?? Colors.blue.value);
+          onLogout: () => setState(() => _authData = AuthenticationData.unauthenticated()),
+          child: MultiProvider(
+            providers: [
+              ChangeNotifierProvider(create: (context) => ContactTabsConfig(tabs: [
+                ContactTab(id: 'all', label: 'All')
+              ])),
+              ChangeNotifierProvider(
+                create: (context) {
+                  final clientHolder = context.findAncestorWidgetOfExactType<ClientHolder>();
+                  if (clientHolder == null) throw Exception('ClientHolder not found');
+                  return MessagingClient(
+                    apiClient: clientHolder.apiClient,
+                    settingsClient: clientHolder.settingsClient,
+                    notificationClient: clientHolder.notificationClient,
+                  );
+                },
+              ),
+              ChangeNotifierProvider(
+                create: (context) {
+                  final clientHolder = context.findAncestorWidgetOfExactType<ClientHolder>();
+                  if (clientHolder == null) throw Exception('ClientHolder not found');
+                  return SessionClient(
+                    apiClient: clientHolder.apiClient,
+                    settingsClient: clientHolder.settingsClient,
+                  );
+                },
+                lazy: false,
+              ),
+              ChangeNotifierProvider(
+                create: (context) {
+                  final clientHolder = context.findAncestorWidgetOfExactType<ClientHolder>();
+                  if (clientHolder == null) throw Exception('ClientHolder not found');
+                  return InventoryClient(
+                    apiClient: clientHolder.apiClient,
+                  );
+                },
+              )
+            ],
+            child: Builder(builder: (context) {
+              final useSystemColor = ClientHolder.of(context).settingsClient.currentSettings.useSystemColor.valueOrDefault;
+              final customColor = Color(ClientHolder.of(context).settingsClient.currentSettings.customColor.valueOrDefault ?? Colors.blue.value);
               
-              return MaterialApp(
-                debugShowCheckedModeBanner: true,
-                title: 'open_contacts',
-                theme: ThemeData(
-                  useMaterial3: true,
-                  textTheme: _typography.black,
-                  colorScheme: useSystemColor 
-                      ? (lightDynamic ?? ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.light))
-                      : ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.light),
-                ),
-                darkTheme: ThemeData(
-                  useMaterial3: true,
-                  textTheme: _typography.white,
-                  colorScheme: useSystemColor
-                      ? (darkDynamic ?? ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.dark))
-                      : ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.dark),
-                ),
-                themeMode: ThemeMode.values[widget.settingsClient.currentSettings.themeMode.valueOrDefault],
-                home: Builder(
-                  // Builder is necessary here since we need a context which has access to the ClientHolder
-                  builder: (context) {
-                    showUpdateDialogOnFirstBuild(context);
-                    final clientHolder = ClientHolder.of(context);
-                    return _authData.isAuthenticated
-                        ? MultiProvider(
-                            providers: [
-                              ChangeNotifierProvider(
-                                create: (context) => MessagingClient(
-                                  apiClient: clientHolder.apiClient,
-                                  settingsClient: clientHolder.settingsClient,
-                                  notificationClient: clientHolder.notificationClient,
+              return DynamicColorBuilder(
+                builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+                  return MaterialApp(
+                    debugShowCheckedModeBanner: true,
+                    title: 'open_contacts',
+                    theme: ThemeData(
+                      useMaterial3: true,
+                      textTheme: _typography.black,
+                      colorScheme: useSystemColor 
+                          ? (lightDynamic ?? ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.light))
+                          : ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.light),
+                    ),
+                    darkTheme: ThemeData(
+                      useMaterial3: true,
+                      textTheme: _typography.white,
+                      colorScheme: useSystemColor
+                          ? (darkDynamic ?? ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.dark))
+                          : ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.dark),
+                    ),
+                    themeMode: ThemeMode.values[ClientHolder.of(context).settingsClient.currentSettings.themeMode.valueOrDefault],
+                    home: Builder(
+                      // Builder is necessary here since we need a context which has access to the ClientHolder
+                      builder: (context) {
+                        showUpdateDialogOnFirstBuild(context);
+                          return _authData.isAuthenticated
+                            ? AnnotatedRegion<SystemUiOverlayStyle>(
+                                value: SystemUiOverlayStyle(
+                                  statusBarColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                                 ),
-                              ),
-                              ChangeNotifierProvider(
-                                create: (context) => SessionClient(
-                                  apiClient: clientHolder.apiClient,
-                                  settingsClient: clientHolder.settingsClient,
-                                ),
-                              ),
-                              ChangeNotifierProvider(
-                                create: (context) => InventoryClient(
-                                  apiClient: clientHolder.apiClient,
-                                ),
+                                child: const Home(),
                               )
-                            ],
-                            child: AnnotatedRegion<SystemUiOverlayStyle>(
-                              value: SystemUiOverlayStyle(
-                                statusBarColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                              ),
-                              child: const Home(),
-                            ),
-                          )
-                        : LoginScreen(
-                            onLoginSuccessful: (AuthenticationData authData) async {
-                              if (authData.isAuthenticated) {
-                                setState(() {
-                                  _authData = authData;
-                                });
-                              }
-                            },
-                          );
-                  },
-                ),
+                            : LoginScreen(
+                                onLoginSuccessful: (AuthenticationData authData) async {
+                                  if (authData.isAuthenticated) {
+                                    setState(() {
+                                      _authData = authData;
+                                    });
+                                  }
+                                },
+                              );
+                      },
+                    ),
+                  );
+                },
               );
-            },
+            }),
           ),
         );
       }),

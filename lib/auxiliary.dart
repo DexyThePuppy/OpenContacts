@@ -6,7 +6,7 @@ import 'package:html/parser.dart' as htmlparser;
 class Aux {
   static String resdbToHttp(String? resdb) {
     if (resdb == null || resdb.isEmpty) {
-      return "${Config.skyfrostAssetsUrl}/default_avatar";
+      return "https://i2.wp.com/vdostavka.ru/wp-content/uploads/2019/05/no-avatar.png";
     }
     
     // Handle invalid URLs or malformed strings
@@ -18,7 +18,7 @@ class Aux {
       
       final filename = p.basenameWithoutExtension(resdb).trim();
       if (filename.isEmpty) {
-        return "${Config.skyfrostAssetsUrl}/default_avatar";
+        return "https://i2.wp.com/vdostavka.ru/wp-content/uploads/2019/05/no-avatar.png";
       }
       
       // Check file extension
@@ -33,7 +33,7 @@ class Aux {
       // For other formats (including .webp), use the standard URL
       return "${Config.skyfrostAssetsUrl}/$filename";
     } catch (e) {
-      return "${Config.skyfrostAssetsUrl}/default_avatar";
+      return "https://i2.wp.com/vdostavka.ru/wp-content/uploads/2019/05/no-avatar.png";
     }
   }
 }

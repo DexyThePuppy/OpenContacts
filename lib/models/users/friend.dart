@@ -3,6 +3,8 @@ import 'package:open_contacts/models/users/friend_status.dart';
 import 'package:open_contacts/models/users/online_status.dart';
 import 'package:open_contacts/models/users/user_profile.dart';
 import 'package:open_contacts/models/users/user_status.dart';
+import 'package:open_contacts/clients/api_client.dart';
+import 'package:open_contacts/apis/user_api.dart';
 
 class Friend implements Comparable {
   static const _emptyId = "-1";
@@ -14,6 +16,8 @@ class Friend implements Comparable {
   final UserProfile userProfile;
   final FriendStatus contactStatus;
   final DateTime latestMessageTime;
+  final List<String> categories;
+  final DateTime registrationDate;
 
   const Friend({
     required this.id,
@@ -23,6 +27,8 @@ class Friend implements Comparable {
     required this.userProfile,
     required this.contactStatus,
     required this.latestMessageTime,
+    required this.registrationDate,
+    this.categories = const [],
   });
 
   bool get isHeadless => userStatus.sessionType == UserSessionType.headless;
@@ -36,19 +42,32 @@ class Friend implements Comparable {
 
   bool get isOnline => !isOffline;
 
+  bool get isPinned => userProfile.isPinned ?? false;
+
   factory Friend.fromMap(Map map) {
     var userStatus = map["userStatus"] == null ? UserStatus.empty() : UserStatus.fromMap(map["userStatus"]);
+    
+    // Get registration date from the user data
+    DateTime registrationDate;
+    try {
+      registrationDate = DateTime.tryParse(map["registrationDate"] ?? "") ?? DateTimeX.epoch;
+    } catch (e) {
+      print('Error parsing registration date: $e');
+      registrationDate = DateTimeX.epoch;
+    }
+
     return Friend(
-      id: map["id"],
-      username: map["contactUsername"],
-      ownerId: map["ownerId"] ?? map["id"],
-      // Resonite bot status is always offline but should be displayed as online
+      id: map["id"] ?? "",
+      username: map["contactUsername"] ?? map["username"] ?? "",
+      ownerId: map["ownerId"] ?? map["id"] ?? "",
       userStatus: map["id"] == _resoniteBotId ? userStatus.copyWith(onlineStatus: OnlineStatus.online) : userStatus,
-      userProfile: UserProfile.fromMap(map["profile"] ?? {}),
-      contactStatus: FriendStatus.fromString(map["contactStatus"]),
+      userProfile: UserProfile.fromMap(map["profile"]),
+      contactStatus: FriendStatus.fromString(map["contactStatus"] ?? ""),
       latestMessageTime: map["latestMessageTime"] == null
           ? DateTime.fromMillisecondsSinceEpoch(0)
           : DateTime.parse(map["latestMessageTime"]),
+      registrationDate: registrationDate,
+      categories: List<String>.from(map["categories"] ?? []),
     );
   }
 
@@ -66,19 +85,37 @@ class Friend implements Comparable {
       userProfile: UserProfile.empty(),
       contactStatus: FriendStatus.none,
       latestMessageTime: DateTimeX.epoch,
+      registrationDate: DateTimeX.epoch,
+      categories: const [],
     );
   }
 
   bool get isEmpty => id == _emptyId;
 
-  Friend copyWith(
-      {String? id,
-      String? username,
-      String? ownerId,
-      UserStatus? userStatus,
-      UserProfile? userProfile,
-      FriendStatus? contactStatus,
-      DateTime? latestMessageTime}) {
+  static Future<Friend> fromMapWithRegistrationDate(Map map, ApiClient client) async {
+    Friend friend = Friend.fromMap(map);
+    if (friend.registrationDate == DateTimeX.epoch) {
+      try {
+        final registrationDate = await UserApi.getRegistrationDate(client, friend.id);
+        return friend.copyWith(registrationDate: registrationDate);
+      } catch (e) {
+        print('Error fetching registration date: $e');
+        return friend;
+      }
+    }
+    return friend;
+  }
+
+  Friend copyWith({
+    String? id,
+    String? username,
+    String? ownerId,
+    UserStatus? userStatus,
+    UserProfile? userProfile,
+    FriendStatus? contactStatus,
+    DateTime? latestMessageTime,
+    DateTime? registrationDate,
+  }) {
     return Friend(
       id: id ?? this.id,
       username: username ?? this.username,
@@ -87,6 +124,8 @@ class Friend implements Comparable {
       userProfile: userProfile ?? this.userProfile,
       contactStatus: contactStatus ?? this.contactStatus,
       latestMessageTime: latestMessageTime ?? this.latestMessageTime,
+      registrationDate: registrationDate ?? this.registrationDate,
+      categories: this.categories,
     );
   }
 
@@ -99,6 +138,8 @@ class Friend implements Comparable {
       "profile": userProfile.toMap(),
       "contactStatus": contactStatus.name,
       "latestMessageTime": latestMessageTime.toIso8601String(),
+      "registrationDate": registrationDate.toIso8601String(),
+      "categories": categories,
     };
   }
 

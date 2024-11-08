@@ -19,13 +19,13 @@ class GenericAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return imageUri == null
+    return imageUri == null || imageUri!.isEmpty
         ? CircleAvatar(
             radius: radius,
             child: Icon(placeholderIcon),
           )
         : CachedNetworkImage(
-            imageUrl: imageUri!,
+            imageUrl: imageUri ?? 'https://assets.resonite.com/images/default_user.png',
             imageBuilder: (context, imageProvider) => radius != null
                 ? CircleAvatar(
                     radius: radius,
@@ -36,19 +36,17 @@ class GenericAvatar extends StatelessWidget {
                     fit: fit ?? BoxFit.cover,
                   ),
             errorWidget: (context, url, error) {
-              print("🐾 DEBUG: Image load error for URL: $url");
-              print("🐾 DEBUG: Error details: $error");
               return CircleAvatar(
                 radius: radius,
-                child: Icon(
-                  Icons.broken_image,
-                  color: foregroundColor,
-                ),
+                child: Icon(placeholderIcon, color: foregroundColor),
               );
             },
-            placeholder: (context, child) => CircleAvatar(
+            placeholder: (context, url) => CircleAvatar(
               radius: radius,
-              child: const CircularProgressIndicator(),
+              child: Icon(
+                Icons.person,
+                color: foregroundColor ?? Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           );
   }

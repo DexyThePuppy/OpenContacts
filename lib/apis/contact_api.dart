@@ -6,6 +6,7 @@ import 'package:open_contacts/models/users/friend_status.dart';
 import 'package:open_contacts/models/users/user.dart';
 import 'package:open_contacts/models/users/user_profile.dart';
 import 'package:open_contacts/models/users/user_status.dart';
+import 'package:open_contacts/apis/user_api.dart';
 
 class ContactApi {
   static Future<List<Friend>> getFriendsList(ApiClient client, {DateTime? lastStatusUpdate}) async {
@@ -16,15 +17,19 @@ class ContactApi {
   }
 
   static Future<void> addUserAsFriend(ApiClient client, {required User user}) async {
+    final registrationDate = await UserApi.getRegistrationDate(client, user.id);
+    
     final friend = Friend(
       id: user.id,
       username: user.username,
       ownerId: client.userId,
+      registrationDate: registrationDate,
       userStatus: UserStatus.empty(),
       userProfile: UserProfile.empty(),
       contactStatus: FriendStatus.accepted,
       latestMessageTime: DateTime.now(),
     );
+    
     final body = jsonEncode(friend.toMap(shallow: true));
     final response = await client.put("/users/${client.userId}/contacts/${user.id}", body: body);
     client.checkResponse(response);

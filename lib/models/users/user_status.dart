@@ -5,6 +5,7 @@ import 'package:open_contacts/models/session.dart';
 import 'package:open_contacts/models/session_metadata.dart';
 import 'package:open_contacts/models/users/online_status.dart';
 import 'package:uuid/uuid.dart';
+import 'package:flutter/material.dart';
 
 enum UserSessionType
 {
@@ -37,6 +38,7 @@ class UserStatus {
   final String hashSalt;
   final UserSessionType sessionType;
   final List<Session> decodedSessions;
+  final Color? appVersionColor;
 
   const UserStatus({
     required this.userId,
@@ -53,7 +55,8 @@ class UserStatus {
     required this.compatibilityHash,
     required this.hashSalt,
     required this.sessionType,
-    this.decodedSessions = const []
+    this.decodedSessions = const [],
+    this.appVersionColor,
   });
 
   factory UserStatus.initial() =>
@@ -65,6 +68,7 @@ class UserStatus {
         userSessionId: const Uuid().v4().toString(),
         sessionType: UserSessionType.chatClient,
         isPresent: true,
+        appVersionColor: Colors.green,
       );
 
   factory UserStatus.empty() =>
@@ -82,7 +86,9 @@ class UserStatus {
         isPresent: false,
         compatibilityHash: "",
         hashSalt: "",
-        sessionType: UserSessionType.unknown
+        sessionType: UserSessionType.unknown,
+        decodedSessions: const [],
+        appVersionColor: null,
       );
 
   factory UserStatus.fromMap(Map map) {
@@ -102,8 +108,24 @@ class UserStatus {
       isMobile: map["isMobile"] ?? false,
       compatibilityHash: map["compatibilityHash"] ?? "",
       hashSalt: map["hashSalt"] ?? "",
-      sessionType: UserSessionType.fromString(map["sessionType"])
+      sessionType: UserSessionType.fromString(map["sessionType"]),
+      decodedSessions: const [],
+      appVersionColor: _tryParseColor(map["appVersionColor"]),
     );
+  }
+
+  static Color? _tryParseColor(dynamic value) {
+    if (value == null) return null;
+    try {
+      if (value is String && value.startsWith('#')) {
+        return Color(int.parse('FF${value.substring(1)}', radix: 16));
+      } else if (value is int) {
+        return Color(value);
+      }
+    } catch (e) {
+      print('*Confused puppy noises* Failed to parse color: $value');
+    }
+    return null;
   }
 
   Map toMap({bool shallow = false}) {
@@ -126,7 +148,8 @@ class UserStatus {
       "outputDevice": outputDevice,
       "isMobile": isMobile,
       "compatibilityHash": compatibilityHash,
-      "sessionType": toBeginningOfSentenceCase(sessionType.name)
+      "sessionType": toBeginningOfSentenceCase(sessionType.name),
+      "appVersionColor": appVersionColor?.value,
     };
   }
 
@@ -146,6 +169,7 @@ class UserStatus {
     String? hashSalt,
     UserSessionType? sessionType,
     List<Session>? decodedSessions,
+    Color? appVersionColor,
   }) =>
       UserStatus(
         userId: userId ?? this.userId,
@@ -163,5 +187,6 @@ class UserStatus {
         hashSalt: hashSalt ?? this.hashSalt,
         sessionType: sessionType ?? this.sessionType,
         decodedSessions: decodedSessions ?? this.decodedSessions,
+        appVersionColor: appVersionColor ?? this.appVersionColor,
       );
 }

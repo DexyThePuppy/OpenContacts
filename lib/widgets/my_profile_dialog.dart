@@ -6,6 +6,9 @@ import 'package:open_contacts/client_holder.dart';
 import 'package:open_contacts/models/personal_profile.dart';
 import 'package:open_contacts/widgets/default_error_widget.dart';
 import 'package:open_contacts/widgets/generic_avatar.dart';
+import 'package:open_contacts/widgets/formatted_text.dart';
+import 'package:open_contacts/string_formatter.dart';
+import 'dart:ui';
 // import 'package:open_contacts/models/users/friend.dart';
 
 class MyProfileDialog extends StatefulWidget {
@@ -35,126 +38,169 @@ class _MyProfileDialogState extends State<MyProfileDialog> {
   @override
   Widget build(BuildContext context) {
     final tt = Theme.of(context).textTheme;
-    DateFormat dateFormat = DateFormat.yMd();
+    final colorScheme = Theme.of(context).colorScheme;
+    DateFormat dateFormat = DateFormat.yMMMd();
+    
     return Dialog(
+      backgroundColor: Colors.transparent,
       child: FutureBuilder(
         future: _personalProfileFuture,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             final profile = snapshot.data as PersonalProfile;
-            return Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+            return Container(
+              constraints: const BoxConstraints(maxWidth: 400),
+              decoration: BoxDecoration(
+                color: colorScheme.surface,
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Stack(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(profile.username, style: tt.titleLarge),
-                          Text(
-                            profile.email,
-                            style:
-                                tt.labelMedium?.copyWith(color: Theme.of(context).colorScheme.onSurface.withAlpha(150)),
-                          )
-                        ],
-                      ),
-                      GenericAvatar(
-                        imageUri: Aux.resdbToHttp(profile.userProfile.iconUrl),
-                        radius: 24,
-                      )
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 16,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "User ID: ",
-                        style: tt.labelLarge,
-                      ),
-                      Text(profile.id)
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "2FA: ",
-                        style: tt.labelLarge,
-                      ),
-                      Text(profile.twoFactor ? "Enabled" : "Disabled")
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Patreon Supporter: ",
-                        style: tt.labelLarge,
-                      ),
-                      Text(profile.isPatreonSupporter ? "Yes" : "No")
-                    ],
-                  ),
-                  if (profile.publicBanExpiration?.isAfter(DateTime.now()) ?? false)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "Ban Expiration: ",
-                          style: tt.labelLarge,
+                  // Blurred background image
+                  if (profile.userProfile.iconUrl.isNotEmpty)
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(28),
+                        child: ImageFiltered(
+                          imageFilter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: Image.network(
+                            Aux.resdbToHttp(profile.userProfile.iconUrl),
+                            fit: BoxFit.cover,
+                            opacity: const AlwaysStoppedAnimation(0.1),
+                          ),
                         ),
-                        Text(dateFormat.format(profile.publicBanExpiration!))
+                      ),
+                    ),
+
+                  // Content
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Profile section
+                        Row(
+                          children: [
+                            GenericAvatar(
+                              imageUri: Aux.resdbToHttp(profile.userProfile.iconUrl),
+                              radius: 32,
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  FormattedText(
+                                    FormatNode.fromText(profile.username),
+                                    style: tt.headlineSmall?.copyWith(
+                                      color: colorScheme.onSurface,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    profile.email,
+                                    style: tt.bodyMedium?.copyWith(
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 24),
+                        
+                        // User info section
+                        Container(
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            children: [
+                              _buildInfoRow("User ID", profile.id, colorScheme, tt),
+                              const SizedBox(height: 12),
+                              _buildInfoRow("2FA", profile.twoFactor ? "Enabled" : "Disabled", colorScheme, tt),
+                              const SizedBox(height: 12),
+                              _buildInfoRow("Patreon Supporter", profile.isPatreonSupporter ? "Yes" : "No", colorScheme, tt),
+                              const SizedBox(height: 12),
+                              _buildInfoRow("Registration Date", dateFormat.format(profile.registrationDate), colorScheme, tt),
+                              if (profile.publicBanExpiration?.isAfter(DateTime.now()) ?? false) ...[
+                                const SizedBox(height: 12),
+                                _buildInfoRow("Ban Expiration", dateFormat.format(profile.publicBanExpiration!), colorScheme, tt),
+                              ],
+                            ],
+                          ),
+                        ),
+
+                        // Storage section
+                        const SizedBox(height: 24),
+                        FutureBuilder(
+                          future: _storageQuotaFuture,
+                          builder: (context, snapshot) {
+                            final storage = snapshot.data;
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: colorScheme.surfaceContainerHighest.withOpacity(0.8),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              padding: const EdgeInsets.all(16),
+                              child: StorageIndicator(
+                                usedBytes: storage?.usedBytes ?? 0,
+                                maxBytes: storage?.fullQuotaBytes ?? 1,
+                              ),
+                            );
+                          }
+                        ),
                       ],
                     ),
-                  FutureBuilder(
-                      future: _storageQuotaFuture,
-                      builder: (context, snapshot) {
-                        final storage = snapshot.data;
-                        return StorageIndicator(
-                          usedBytes: storage?.usedBytes ?? 0,
-                          maxBytes: storage?.fullQuotaBytes ?? 1,
-                        );
-                      }),
-                  const SizedBox(
-                    height: 12,
                   ),
                 ],
               ),
             );
           } else if (snapshot.hasError) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                DefaultErrorWidget(
-                  message: snapshot.error.toString(),
-                  onRetry: () {
-                    setState(() {
-                      _personalProfileFuture = UserApi.getPersonalProfile(ClientHolder.of(context).apiClient);
-                    });
-                  },
-                ),
-              ],
+            return DefaultErrorWidget(
+              message: snapshot.error.toString(),
+              onRetry: () {
+                setState(() {
+                  _personalProfileFuture = UserApi.getPersonalProfile(ClientHolder.of(context).apiClient);
+                });
+              },
             );
           } else {
-            return const Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 96, horizontal: 64),
-                  child: CircularProgressIndicator(),
-                ),
-              ],
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: CircularProgressIndicator(),
+              ),
             );
           }
         },
       ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, ColorScheme colorScheme, TextTheme tt) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: tt.bodyMedium?.copyWith(
+            color: colorScheme.onSurfaceVariant,
+          ),
+        ),
+        Text(
+          value,
+          style: tt.bodyMedium?.copyWith(
+            color: colorScheme.onSurface,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

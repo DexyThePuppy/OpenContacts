@@ -45,4 +45,11 @@ class UserApi {
     final data = jsonDecode(response.body);
     return StorageQuota.fromMap(data);
   }
+
+  static Future<DateTime> getRegistrationDate(ApiClient client, String userId) async {
+    final response = await client.get("/users/$userId");
+    client.checkResponse(response);
+    final data = jsonDecode(response.body);
+    return DateTime.parse(data['registrationDate']);
+  }
 }

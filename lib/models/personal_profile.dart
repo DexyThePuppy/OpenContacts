@@ -12,6 +12,7 @@ class PersonalProfile {
   final UserProfile userProfile;
   final List<Entitlement> entitlements;
   final List<SupporterMetadata> supporterMetadata;
+  final DateTime registrationDate;
 
   PersonalProfile({
     required this.id,
@@ -23,9 +24,10 @@ class PersonalProfile {
     required this.userProfile,
     required this.entitlements,
     required this.supporterMetadata,
+    required this.registrationDate,
   });
 
-  factory PersonalProfile.fromMap(Map map) {
+  factory PersonalProfile.fromMap(Map<String, dynamic> map) {
     return PersonalProfile(
       id: map["id"] ?? "",
       username: map["username"] ?? "",
@@ -36,6 +38,7 @@ class PersonalProfile {
       userProfile: UserProfile.fromMap(map["profile"]),
       entitlements: ((map["entitlements"] ?? []) as List).map((e) => Entitlement.fromMap(e)).toList(),
       supporterMetadata: ((map["supporterMetadata"] ?? []) as List).map((e) => SupporterMetadata.fromMap(e)).toList(),
+      registrationDate: DateTime.tryParse(map['registrationDate'] ?? '') ?? DateTimeX.epoch,
     );
   }
 

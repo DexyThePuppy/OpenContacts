@@ -1,12 +1,12 @@
-<img src="https://raw.githubusercontent.com/Mrdabup/open_contacts/refs/heads/dev/assets/images/logo512.png" width="200"/>
+<img src="https://raw.githubusercontent.com/Mrdabup/OpenContacts/refs/heads/dev/assets/images/logo512.png" width="200"/>
 
-# open_contacts
+# OpenContacts
 
-A Resonite Contacts App, based on Nutcake's Recon.
+A Resonite Contacts App, based on Nutcake's Recon and forked from Mrdabup
 
 [Get the latest version of open_contacts here](https://git.mrdab.vore.media/ThatOneJackalGuy/open_contacts/releases)
 
-[Available on github too!](https://github.com/Mrdabup/open_contacts/releases)
+[Available on github too!](https://github.com/Mrdabup/OpenContacts/releases)
 
 [Get ReCon here](https://github.com/Nutcake/ReCon)
 

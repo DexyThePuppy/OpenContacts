@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
@@ -21,6 +22,7 @@ import 'package:open_contacts/models/users/friend.dart';
 import 'package:open_contacts/models/users/online_status.dart';
 import 'package:open_contacts/models/users/user_status.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 
 enum ViewMode {
   list,
@@ -84,6 +86,11 @@ class MessagingClient extends ChangeNotifier {
     notifyListeners();
   }
 
+  List<Category>? get categories => _categories;
+  List<Category>? _categories;
+
+  late Box _messageBox;
+
   MessagingClient(
       {required ApiClient apiClient,
       required NotificationClient notificationClient,
@@ -92,8 +99,8 @@ class MessagingClient extends ChangeNotifier {
         _notificationClient = notificationClient,
         _settingsClient = settingsClient {
     debugPrint("mClient created: $hashCode");
-    Hive.openBox(_messageBoxKey).then((box) async {
-      await box.delete(_lastUpdateKey);
+    _initMessageBox().then((_) async {
+      await _messageBox.delete(_lastUpdateKey);
       final sessions = await SessionApi.getSessions(_apiClient);
       _sessionMap.addEntries(sessions.map((e) => MapEntry(e.id, e)));
       _setupHub();
@@ -240,12 +247,17 @@ class MessagingClient extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateFriendStatus(String userId) async {
-    final friend = getAsFriend(userId);
-    if (friend == null) return;
-    final newStatus = await UserApi.getUserStatus(_apiClient, userId: userId);
-    await _updateContact(friend.copyWith(userStatus: newStatus));
-    notifyListeners();
+  Future<void> updateFriendStatus(Friend friend) async {
+    try {
+      final status = await UserApi.getUserStatus(_apiClient, userId: friend.id);
+      await _updateContact(friend.copyWith(userStatus: status));
+    } catch (e) {
+      // Silently handle 404s for deleted/invalid users
+      if (e.toString().contains('404')) {
+        return;
+      }
+      rethrow;
+    }
   }
 
   void resetInitStatus() {
@@ -283,22 +295,28 @@ class MessagingClient extends ChangeNotifier {
 
   void _sortFriendsCache() {
     _sortedFriendsCache.sort((a, b) {
-      // Check for unreads and sort by latest message time if either has unreads
+      // First sort by pin status
+      if (a.userProfile.isPinned != b.userProfile.isPinned) {
+        return (a.userProfile.isPinned ?? false) ? -1 : 1;
+      }
+
+      // Then check for unreads
       bool aHasUnreads = friendHasUnreads(a);
       bool bHasUnreads = friendHasUnreads(b);
       if (aHasUnreads || bHasUnreads) {
         if (aHasUnreads && bHasUnreads) {
           return -a.latestMessageTime.compareTo(b.latestMessageTime);
         }
-
         return aHasUnreads ? -1 : 1;
       }
 
+      // Then by online status
       int onlineStatusComparison = getOnlineStatusValue(a).compareTo(getOnlineStatusValue(b));
       if (onlineStatusComparison != 0) {
         return onlineStatusComparison;
       }
 
+      // Finally by message time
       return -a.latestMessageTime.compareTo(b.latestMessageTime);
     });
   }
@@ -380,7 +398,10 @@ class MessagingClient extends ChangeNotifier {
     cache.addMessage(message);
     if (message.senderId != selectedFriend?.id) {
       addUnread(message);
-      updateFriendStatus(message.senderId);
+      final friend = getAsFriend(message.senderId);
+      if (friend != null) {
+        updateFriendStatus(friend);
+      }
     } else {
       markMessagesRead(MarkReadBatch(senderId: message.senderId, ids: [message.id], readTime: DateTime.now()));
     }
@@ -434,5 +455,51 @@ class MessagingClient extends ChangeNotifier {
     final session = args[0];
     _sessionMap.remove(session);
     notifyListeners();
+  }
+
+  Future<void> toggleFriendPin(Friend friend) async {
+    final updatedProfile = friend.userProfile.copyWith(isPinned: !friend.isPinned);
+    final updatedFriend = friend.copyWith(userProfile: updatedProfile);
+    await _updateContact(updatedFriend);
+    notifyListeners();
+  }
+
+  void addFriendToCategory(Friend friend, String categoryId) {
+    // Add friend to category implementation
+    // You might want to make an API call or update local state here
+    notifyListeners();
+  }
+
+  void removeFriendFromCategory(Friend friend, String categoryId) {
+    // Remove friend from the specified category
+    friend.categories.remove(categoryId);
+    notifyListeners();
+  }
+
+  Future<void> blockFriend(Friend friend) async {
+    // TODO: Implement actual blocking logic
+    notifyListeners();
+  }
+
+  Future<void> _initMessageBox() async {
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      final lockFile = File('${appDir.path}/message-box.lock');
+      if (await lockFile.exists()) {
+        try {
+          await lockFile.delete();
+        } catch (e) {
+          // Ignore delete errors
+        }
+      }
+      
+      _messageBox = await Hive.openBox(_messageBoxKey);
+    } catch (e) {
+      _initStatus = "Failed to initialize message storage: $e";
+      notifyListeners();
+      // Retry after a short delay
+      await Future.delayed(const Duration(seconds: 1));
+      await _initMessageBox();
+    }
   }
 }

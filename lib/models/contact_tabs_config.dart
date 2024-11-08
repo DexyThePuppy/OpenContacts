@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 
 class ContactTab {
   final String id;
@@ -23,7 +24,7 @@ class ContactTab {
   }
 }
 
-class ContactTabsConfig {
+class ContactTabsConfig extends ChangeNotifier {
   final List<ContactTab> tabs;
 
   ContactTabsConfig({required this.tabs});
@@ -35,5 +36,22 @@ class ContactTabsConfig {
           .map((tab) => ContactTab.fromJson(tab))
           .toList(),
     );
+  }
+
+  void addUserToTab(String userId, String tabId) {
+    final tab = tabs.firstWhere((tab) => tab.id == tabId);
+    tab.userIds?.add(userId);
+    notifyListeners();
+  }
+
+  void removeUserFromTab(String userId, String tabId) {
+    final tab = tabs.firstWhere((tab) => tab.id == tabId);
+    tab.userIds?.remove(userId);
+    notifyListeners();
+  }
+
+  bool isUserInTab(String userId, String tabId) {
+    final tab = tabs.firstWhere((tab) => tab.id == tabId);
+    return tab.userIds?.contains(userId) ?? false;
   }
 } 

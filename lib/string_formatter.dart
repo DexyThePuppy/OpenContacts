@@ -19,6 +19,7 @@ class FormatNode {
 
   factory FormatNode.fromText(String? text) {
     if (text == null) return FormatNode.unformatted(text);
+    text = removeSizeTags(text);
     var tags = FormatTag.parseTags(text);
     if (tags.isEmpty) return FormatNode.unformatted(text);
     final root = FormatNode(
@@ -72,6 +73,10 @@ class FormatNode {
     }
     current.text = text;
     return root;
+  }
+
+  static String removeSizeTags(String text) {
+    return text.replaceAll(RegExp(r'<size=.*?>|</size>'), '');
   }
 }
 
@@ -163,12 +168,25 @@ class FormatData {
   }
 
   static Color? tryParseColor(String text) {
-    // is it a hex color?
+    // Handle hex colors with or without # prefix
     if (_hexColorRegExp.hasMatch(text)) {
       return _parseHexColor(text);
     }
 
-    // is it one of Resonite's color constants?
+    // Handle Resonite's color format (e.g. #FFB3BAFF)
+    if (text.startsWith('#') && text.length == 9) {
+      try {
+        final r = int.parse(text.substring(1, 3), radix: 16);
+        final g = int.parse(text.substring(3, 5), radix: 16);
+        final b = int.parse(text.substring(5, 7), radix: 16);
+        final a = int.parse(text.substring(7, 9), radix: 16);
+        return Color.fromARGB(a, r, g, b);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    // Handle platform colors
     if (_platformColorRegExp.hasMatch(text)) {
       final parts = text.split(".");
       if (parts.length == 2) {
@@ -179,13 +197,12 @@ class FormatData {
       }
     }
 
-    // is it a named color?
-    final color = cc.RgbColor.namedColors[text];
+    // Handle named colors
+    final color = cc.RgbColor.namedColors[text.toLowerCase()];
     if (color != null) {
       return Color.fromARGB(255, color.r.round(), color.g.round(), color.b.round());
     }
 
-    // whatever it is, it's probably safe to assume it's not a color
     return null;
   }
 
@@ -199,9 +216,22 @@ class FormatData {
     }),
     "color": FormatAction(style: (param, baseStyle) {
       if (param == null) return baseStyle;
+      
+      // Handle hex colors with # prefix
+      if (param.startsWith('#')) {
+        final color = tryParseColor(param);
+        if (color != null) return baseStyle.copyWith(color: color);
+      }
+      
+      // Handle hex colors without # prefix
+      if (param.length == 6 || param.length == 8) {
+        final color = tryParseColor('#$param');
+        if (color != null) return baseStyle.copyWith(color: color);
+      }
+      
+      // Try parsing as a named color
       final color = tryParseColor(param);
-      if (color == null) return baseStyle;
-      return baseStyle.copyWith(color: color);
+      return baseStyle.copyWith(color: color ?? baseStyle.color);
     }),
     "b": FormatAction(style: (param, baseStyle) => baseStyle.copyWith(fontWeight: FontWeight.bold)),
     "br": FormatAction(transform: (text, param) => "\n$text"),
