@@ -4,9 +4,7 @@ import 'package:open_contacts/auxiliary.dart';
 import 'package:open_contacts/clients/messaging_client.dart';
 import 'package:open_contacts/models/message.dart';
 import 'package:open_contacts/models/users/friend.dart';
-import 'package:open_contacts/models/users/online_status.dart';
 import 'package:open_contacts/widgets/formatted_text.dart';
-import 'package:open_contacts/widgets/friends/friend_online_status_indicator.dart';
 import 'package:open_contacts/widgets/generic_avatar.dart';
 import 'package:open_contacts/widgets/messages/messages_list.dart';
 import 'package:open_contacts/widgets/user_profile_dialog.dart';
@@ -15,11 +13,16 @@ import 'package:open_contacts/widgets/friends/friend_context_menu.dart';
 import 'package:open_contacts/client_holder.dart';
 import 'package:open_contacts/widgets/my_profile_dialog.dart';
 import 'package:open_contacts/models/contact_tabs_config.dart';
+import 'package:open_contacts/badges_db.dart';
+import 'dart:ui' as ui;
 
-
-
-class FriendListTile extends StatelessWidget {
-  const FriendListTile({required this.friend, required this.unreads, this.onTap, super.key, this.onLongPress});
+class FriendListTile extends StatefulWidget {
+  const FriendListTile(
+      {required this.friend,
+      required this.unreads,
+      this.onTap,
+      super.key,
+      this.onLongPress});
 
   final Friend friend;
   final int unreads;
@@ -27,156 +30,563 @@ class FriendListTile extends StatelessWidget {
   final Function? onLongPress;
 
   @override
+  State<FriendListTile> createState() => _FriendListTileState();
+}
+
+class _FriendListTileState extends State<FriendListTile>
+    with AutomaticKeepAliveClientMixin {
+  bool isHovered = false;
+  Offset? mousePosition;
+  Alignment imageAlignment = Alignment.center;
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final imageUri = Aux.resdbToHttp(friend.userProfile.iconUrl);
+    super.build(context);
+
+    final imageUri = Aux.resdbToHttp(widget.friend.userProfile.iconUrl);
     final theme = Theme.of(context);
     final mClient = Provider.of<MessagingClient>(context, listen: false);
-    final currentSession = friend.userStatus.currentSessionIndex == -1
+    final tabsConfig = Provider.of<ContactTabsConfig>(context, listen: true);
+    final currentSession = widget.friend.userStatus.currentSessionIndex == -1
         ? null
-        : friend.userStatus.decodedSessions.elementAtOrNull(friend.userStatus.currentSessionIndex);
-    return GestureDetector(
-      onSecondaryTapUp: (details) {
-        FriendContextMenu.show(
-          context: context,
-          friend: friend,
-          position: RelativeRect.fromLTRB(
-            details.globalPosition.dx,
-            details.globalPosition.dy,
-            details.globalPosition.dx,
-            details.globalPosition.dy,
-          ),
-          tabs: [ContactTab(id: 'all', label: 'All')],
-        );
-      },
-      child: ListTile(
-        leading: GenericAvatar(
-          imageUri: imageUri,
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (friend.userProfile.isPinned ?? false)
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: Icon(
-                  Icons.push_pin,
-                  size: 16,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            if (unreads != 0)
-              Text(
-                "+$unreads",
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.primary
-                ),
-              ),
-          ],
-        ),
-        title: Row(
-          children: [
-            Text(friend.username),
-            if (friend.isHeadless)
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Icon(
-                  Icons.dns,
-                  size: 12,
-                  color: theme.colorScheme.onSecondaryContainer.withAlpha(150),
-                ),
-              ),
-          ],
-        ),
-        subtitle: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            FriendOnlineStatusIndicator(friend: friend),
-            const SizedBox(
-              width: 4,
-            ),
-            if (!friend.isOffline && !friend.isHeadless) ...[
-              FormattedText(FormatNode.fromText(friend.userStatus.onlineStatus.name)),
-              if (currentSession != null) ...[
-                const Text(" in "),
-                if (currentSession.name.isNotEmpty)
-                  Expanded(
-                    child: FormattedText(
-                      currentSession.formattedName,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
+        : widget.friend.userStatus.decodedSessions
+            .elementAtOrNull(widget.friend.userStatus.currentSessionIndex);
+
+    return LayoutBuilder(
+      builder: (context, constraints) => MouseRegion(
+        onEnter: (event) {
+          setState(() {
+            mousePosition = event.localPosition;
+            isHovered = true;
+          });
+        },
+        onHover: (event) {
+          setState(() {
+            mousePosition = event.localPosition;
+          });
+        },
+        onExit: (_) {
+          setState(() {
+            isHovered = false;
+          });
+        },
+        child: SizedBox(
+          height: 56,
+          child: Stack(
+            children: [
+              if (mousePosition != null)
+                Positioned.fromRect(
+                  rect: Rect.fromLTWH(
+                    8,
+                    1,
+                    constraints.maxWidth - 16,
+                    54,
+                  ),
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.fastEaseInToSlowEaseOut,
+                    opacity: isHovered ? 0.1 : 0,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: TweenAnimationBuilder<Alignment>(
+                        duration: const Duration(milliseconds: 800),
+                        curve: Curves.easeOutCubic,
+                        tween: Tween<Alignment>(
+                          begin: mousePosition != null
+                              ? Alignment(
+                                  ((mousePosition!.dx / constraints.maxWidth) -
+                                          0.5) *
+                                      0.3,
+                                  ((mousePosition!.dy / 54) - 0.5) * 0.3,
+                                )
+                              : Alignment.center,
+                          end: Alignment.center,
+                        ),
+                        builder: (context, alignment, child) => Image.network(
+                          imageUri,
+                          fit: BoxFit.cover,
+                          alignment: alignment,
+                        ),
+                      ),
                     ),
-                  )
-                else
-                  Expanded(
-                    child: Text(
-                      "${currentSession.accessLevel.toReadableString()} World",
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  )
-              ] else if (friend.userStatus.appVersion.isNotEmpty)
-                Expanded(
-                  child: FormattedText(
-                    FormatNode.fromText(friend.userStatus.appVersion),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
                   ),
                 ),
-            ] else if (friend.isOffline)
-              Text(
-                "Offline",
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: OnlineStatus.offline.color(context),
+              LongPressDraggable<Friend>(
+                data: widget.friend,
+                dragAnchorStrategy: pointerDragAnchorStrategy,
+                feedback: Material(
+                  elevation: 5.0,
+                  borderRadius: BorderRadius.circular(28),
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        image: DecorationImage(
+                          image: NetworkImage(imageUri),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              )
-            else
-              Text(
-                "Headless Host",
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: const Color.fromARGB(255, 41, 77, 92),
+                childWhenDragging: Opacity(
+                  opacity: 0.3,
+                  child: Card(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    child: ListTile(
+                      leading: GenericAvatar(imageUri: imageUri),
+                      title: Text(widget.friend.username),
+                    ),
+                  ),
                 ),
-              )
-          ],
-        ),
-        onTap: () async {
-          onTap?.call();
-          mClient.loadUserMessageCache(friend.id);
-          final unreads = mClient.getUnreadsForFriend(friend);
-          if (unreads.isNotEmpty) {
-            final readBatch = MarkReadBatch(
-              senderId: friend.id,
-              ids: unreads.map((e) => e.id).toList(),
-              readTime: DateTime.now(),
-            );
-            mClient.markMessagesRead(readBatch);
-          }
-          mClient.selectedFriend = friend;
-          await Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => ChangeNotifierProvider<MessagingClient>.value(
-                value: mClient,
-                child: const MessagesList(),
+                child: GestureDetector(
+                  onSecondaryTapUp: (details) {
+                    FriendContextMenu.show(
+                      context: context,
+                      friend: widget.friend,
+                      position: RelativeRect.fromLTRB(
+                        details.globalPosition.dx,
+                        details.globalPosition.dy,
+                        details.globalPosition.dx,
+                        details.globalPosition.dy,
+                      ),
+                      tabs: tabsConfig.tabs,
+                    );
+                  },
+                  child: Container(
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+                    child: Material(
+                      color: Colors.transparent,
+                      clipBehavior: Clip.antiAlias,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                        ),
+                        visualDensity: VisualDensity.compact,
+                        dense: true,
+                        leading: SizedBox(
+                          width: 30,
+                          height: 30,
+                          child: GenericAvatar(
+                            imageUri: imageUri,
+                            radius: 18,
+                          ),
+                        ),
+                        title: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Transform.translate(
+                              offset: const Offset(0, -3),
+                              child: Text(
+                                widget.friend.username,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 13.5,
+                                  height: 1.2,
+                                  leadingDistribution:
+                                      TextLeadingDistribution.even,
+                                ),
+                              ),
+                            ),
+                            if (widget.friend.isHeadless)
+                              Transform.translate(
+                                offset: const Offset(0, -1),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 3, vertical: 0),
+                                  child: Icon(
+                                    Icons.dns,
+                                    size: 12,
+                                    color: theme
+                                        .colorScheme.onSecondaryContainer
+                                        .withOpacity(1.0),
+                                  ),
+                                ),
+                              ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceVariant
+                                    .withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ...widget.friend.userStatus.badges
+                                      .map((badge) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(right: 4),
+                                      child: Image.network(badge.assetUrl,
+                                          width: 16,
+                                          height: 16,
+                                          color: theme
+                                              .colorScheme.onSurfaceVariant),
+                                    );
+                                  }).toList(),
+                                  if (widget.friend.userStatus.isHost ?? false)
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 4),
+                                      child: Image.network(
+                                        BadgesDB.commonBadges['host']
+                                                ?.assetUrl ??
+                                            '',
+                                        width: 16,
+                                        height: 16,
+                                        color: const Color(0xFFE69E50),
+                                      ),
+                                    ),
+                                  if (widget
+                                          .friend.userProfile.supporterMetadata
+                                          ?.any((m) =>
+                                              m.type == 'patreon' &&
+                                              m.isActiveSupporter) ??
+                                      false)
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 4),
+                                      child: Image.network(
+                                        BadgesDB.commonBadges['supporter']
+                                                ?.assetUrl ??
+                                            '',
+                                        width: 16,
+                                        height: 16,
+                                        color: const Color(0xFFFF424D),
+                                      ),
+                                    ),
+                                  if (widget.friend.userProfile.isTeamMember)
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 4),
+                                      child: Image.network(
+                                        BadgesDB.teamBadges['team']?.assetUrl ??
+                                            '',
+                                        width: 16,
+                                        height: 16,
+                                        color: const Color(0xFF00B0F4),
+                                      ),
+                                    ),
+                                  if (widget.friend.userProfile.isModerator)
+                                    Padding(
+                                      padding: const EdgeInsets.only(right: 4),
+                                      child: Image.network(
+                                        BadgesDB.teamBadges['moderator']
+                                                ?.assetUrl ??
+                                            '',
+                                        width: 16,
+                                        height: 16,
+                                        color: const Color(0xFF1ABC9C),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        subtitle: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            if (!widget.friend.isOffline &&
+                                !widget.friend.isHeadless) ...[
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: widget.friend.userStatus.onlineStatus
+                                      .color(context)
+                                      .withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      margin: const EdgeInsets.only(top: 1),
+                                      child: Icon(
+                                        Icons.circle,
+                                        size: 6,
+                                        color: widget
+                                            .friend.userStatus.onlineStatus
+                                            .color(context),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 3),
+                                    FormattedText(
+                                      FormatNode.fromText(widget
+                                          .friend.userStatus.onlineStatus.name),
+                                      style:
+                                          theme.textTheme.bodyMedium?.copyWith(
+                                        fontWeight: FontWeight.w500,
+                                        color: widget
+                                            .friend.userStatus.onlineStatus
+                                            .color(context),
+                                        fontSize: 12,
+                                        height: 1.0,
+                                        leadingDistribution:
+                                            TextLeadingDistribution.even,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (currentSession != null) ...[
+                                const SizedBox(width: 4),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (currentSession.name.isNotEmpty)
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: theme
+                                              .colorScheme.tertiaryContainer
+                                              .withOpacity(0.6),
+                                          borderRadius: BorderRadius.horizontal(
+                                            left: Radius.circular(12),
+                                            right: Radius.zero,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              Icons.public,
+                                              size: 12,
+                                              color: theme.colorScheme
+                                                  .onTertiaryContainer,
+                                            ),
+                                            const SizedBox(width: 3),
+                                            Flexible(
+                                              child: FormattedText(
+                                                currentSession.formattedName,
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 1,
+                                                style: theme
+                                                    .textTheme.bodyMedium
+                                                    ?.copyWith(
+                                                  fontWeight: FontWeight.w500,
+                                                  color: theme.colorScheme
+                                                      .onTertiaryContainer,
+                                                  fontSize: 12,
+                                                  height: 1.0,
+                                                  leadingDistribution:
+                                                      TextLeadingDistribution
+                                                          .even,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: theme
+                                            .colorScheme.surfaceContainerHighest
+                                            .withOpacity(0.6),
+                                        borderRadius: BorderRadius.horizontal(
+                                          left: currentSession.name.isEmpty
+                                              ? Radius.circular(12)
+                                              : Radius.zero,
+                                          right: Radius.circular(12),
+                                        ),
+                                      ),
+                                      child: FormattedText(
+                                        FormatNode.fromText(currentSession
+                                            .accessLevel
+                                            .toReadableString()),
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.w500,
+                                          color: theme
+                                              .colorScheme.onSurfaceVariant,
+                                          fontSize: 12,
+                                          height: 1.0,
+                                          leadingDistribution:
+                                              TextLeadingDistribution.even,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ] else if (widget
+                                  .friend.userStatus.appVersion.isNotEmpty) ...[
+                                const SizedBox(width: 4),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: theme
+                                        .colorScheme.surfaceContainerHighest
+                                        .withOpacity(0.6),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.info,
+                                        size: 12,
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                      const SizedBox(width: 3),
+                                      Flexible(
+                                        child: FormattedText(
+                                          FormatNode.fromText(widget
+                                              .friend.userStatus.appVersion),
+                                          overflow: TextOverflow.ellipsis,
+                                          maxLines: 1,
+                                          style: theme.textTheme.bodyMedium
+                                              ?.copyWith(
+                                            fontWeight: FontWeight.w500,
+                                            color: theme
+                                                .colorScheme.onSurfaceVariant,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ]
+                            ] else if (widget.friend.isOffline)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 1),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 6,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      "Offline",
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                      style:
+                                          theme.textTheme.bodyMedium?.copyWith(
+                                        color: Colors.grey,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: theme
+                                      .colorScheme.surfaceContainerHighest
+                                      .withOpacity(0.6),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.dns,
+                                      size: 12,
+                                    ),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      "Headless Host",
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                      style:
+                                          theme.textTheme.bodyMedium?.copyWith(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                        height: 1.0,
+                                        leadingDistribution:
+                                            TextLeadingDistribution.even,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                          ],
+                        ),
+                        onTap: () async {
+                          widget.onTap?.call();
+                          mClient.loadUserMessageCache(widget.friend.id);
+                          final unreads =
+                              mClient.getUnreadsForFriend(widget.friend);
+                          if (unreads.isNotEmpty) {
+                            final readBatch = MarkReadBatch(
+                              senderId: widget.friend.id,
+                              ids: unreads.map((e) => e.id).toList(),
+                              readTime: DateTime.now(),
+                            );
+                            mClient.markMessagesRead(readBatch);
+                          }
+                          mClient.selectedFriend = widget.friend;
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ChangeNotifierProvider<MessagingClient>.value(
+                                value: mClient,
+                                child: const MessagesList(),
+                              ),
+                            ),
+                          );
+                          mClient.selectedFriend = null;
+                        },
+                        onLongPress: () async {
+                          final myId =
+                              ClientHolder.of(context).apiClient.userId;
+                          await showDialog(
+                            context: context,
+                            builder: (context) {
+                              return widget.friend.id == myId
+                                  ? const MyProfileDialog()
+                                  : UserProfileDialog(friend: widget.friend);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          );
-          mClient.selectedFriend = null;
-        },
-        onLongPress: () async {
-          final myId = ClientHolder.of(context).apiClient.userId;
-          await showDialog(
-            context: context,
-            builder: (context) {
-              return friend.id == myId 
-                ? const MyProfileDialog()
-                : UserProfileDialog(friend: friend);
-            },
-          );
-        }
+            ],
+          ),
+        ),
       ),
     );
   }

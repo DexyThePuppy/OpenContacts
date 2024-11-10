@@ -57,7 +57,8 @@ class MessagingClient extends ChangeNotifier {
   static const String _lastUpdateKey = "__last-update-time";
 
   final ApiClient _apiClient;
-  final List<Friend> _sortedFriendsCache = []; // Keep a sorted copy so as to not have to sort during build()
+  final List<Friend> _sortedFriendsCache =
+      []; // Keep a sorted copy so as to not have to sort during build()
   final Map<String, MessageCache> _messageCache = {};
   final Map<String, List<Message>> _unreads = {};
   final Logger _logger = Logger("Messaging");
@@ -127,13 +128,16 @@ class MessagingClient extends ChangeNotifier {
   bool friendHasUnreads(Friend friend) => _unreads.containsKey(friend.id);
 
   bool messageIsUnread(Message message) =>
-      _unreads[message.senderId]?.any((element) => element.id == message.id) ?? false;
+      _unreads[message.senderId]?.any((element) => element.id == message.id) ??
+      false;
 
-  Friend? getAsFriend(String userId) => Friend.fromMapOrNull(Hive.box(_messageBoxKey).get(userId));
+  Friend? getAsFriend(String userId) =>
+      Friend.fromMapOrNull(Hive.box(_messageBoxKey).get(userId));
 
   MessageCache? getUserMessageCache(String userId) => _messageCache[userId];
 
-  MessageCache _createUserMessageCache(String userId) => MessageCache(apiClient: _apiClient, userId: userId);
+  MessageCache _createUserMessageCache(String userId) =>
+      MessageCache(apiClient: _apiClient, userId: userId);
 
   Future<void> refreshFriendsListWithErrorHandler() async {
     try {
@@ -149,7 +153,8 @@ class MessagingClient extends ChangeNotifier {
     _autoRefresh?.cancel();
     _autoRefresh = Timer(_autoRefreshDuration, () => refreshFriendsList());
 
-    final friends = await ContactApi.getFriendsList(_apiClient, lastStatusUpdate: lastUpdateUtc);
+    final friends = await ContactApi.getFriendsList(_apiClient,
+        lastStatusUpdate: lastUpdateUtc);
     for (final friend in friends) {
       await _updateContact(friend);
     }
@@ -161,13 +166,15 @@ class MessagingClient extends ChangeNotifier {
   void sendMessage(Message message) {
     final msgBody = message.toMap();
     _hubManager.send("SendMessage", arguments: [msgBody]);
-    final cache = getUserMessageCache(message.recipientId) ?? _createUserMessageCache(message.recipientId);
+    final cache = getUserMessageCache(message.recipientId) ??
+        _createUserMessageCache(message.recipientId);
     cache.addMessage(message);
     notifyListeners();
   }
 
   void markMessagesRead(MarkReadBatch batch) {
-    if (_userStatus.onlineStatus == OnlineStatus.invisible || _userStatus.onlineStatus == OnlineStatus.offline) return;
+    if (_userStatus.onlineStatus == OnlineStatus.Invisible ||
+        _userStatus.onlineStatus == OnlineStatus.Offline) return;
     final msgBody = batch.toMap();
     _hubManager.send("MarkMessagesRead", arguments: [msgBody]);
     clearUnreadsForUser(batch.senderId);
@@ -178,7 +185,7 @@ class MessagingClient extends ChangeNotifier {
     final now = DateTime.now();
     _userStatus = _userStatus.copyWith(
       userId: _apiClient.userId,
-      appVersion: "${pkginfo.version} of ${pkginfo.appName}",
+      appVersion: "${pkginfo.appName} ${pkginfo.version}",
       lastPresenceTimestamp: now,
       lastStatusChange: now,
       onlineStatus: status,
@@ -241,7 +248,8 @@ class MessagingClient extends ChangeNotifier {
   }
 
   Future<void> loadUserMessageCache(String userId) async {
-    final cache = getUserMessageCache(userId) ?? _createUserMessageCache(userId);
+    final cache =
+        getUserMessageCache(userId) ?? _createUserMessageCache(userId);
     await cache.loadMessages();
     _messageCache[userId] = cache;
     notifyListeners();
@@ -267,7 +275,8 @@ class MessagingClient extends ChangeNotifier {
 
   Future<void> _refreshUnreads() async {
     try {
-      final unreadMessages = await MessageApi.getUserMessages(_apiClient, unreadOnly: true);
+      final unreadMessages =
+          await MessageApi.getUserMessages(_apiClient, unreadOnly: true);
       updateAllUnreads(unreadMessages.toList());
     } catch (_) {}
   }
@@ -277,17 +286,17 @@ class MessagingClient extends ChangeNotifier {
     // Adjusting values to ensure correct placement of 'headless'
     if (friend.isHeadless) return 2.5;
     switch (friend.userStatus.onlineStatus) {
-      case OnlineStatus.sociable:
+      case OnlineStatus.Sociable:
         return 0;
-      case OnlineStatus.online:
+      case OnlineStatus.Online:
         return 1;
-      case OnlineStatus.away:
+      case OnlineStatus.Away:
         return 2;
-      case OnlineStatus.busy:
+      case OnlineStatus.Busy:
         return 3;
-      case OnlineStatus.invisible:
+      case OnlineStatus.Invisible:
         return 3.5;
-      case OnlineStatus.offline:
+      case OnlineStatus.Offline:
       default:
         return 4;
     }
@@ -311,7 +320,8 @@ class MessagingClient extends ChangeNotifier {
       }
 
       // Then by online status
-      int onlineStatusComparison = getOnlineStatusValue(a).compareTo(getOnlineStatusValue(b));
+      int onlineStatusComparison =
+          getOnlineStatusValue(a).compareTo(getOnlineStatusValue(b));
       if (onlineStatusComparison != 0) {
         return onlineStatusComparison;
       }
@@ -325,10 +335,12 @@ class MessagingClient extends ChangeNotifier {
     final box = Hive.box(_messageBoxKey);
     box.put(friend.id, friend.toMap());
     final lastStatusUpdate = box.get(_lastUpdateKey);
-    if (lastStatusUpdate == null || friend.userStatus.lastStatusChange.isAfter(lastStatusUpdate)) {
+    if (lastStatusUpdate == null ||
+        friend.userStatus.lastStatusChange.isAfter(lastStatusUpdate)) {
       await box.put(_lastUpdateKey, friend.userStatus.lastStatusChange);
     }
-    final sIndex = _sortedFriendsCache.indexWhere((element) => element.id == friend.id);
+    final sIndex =
+        _sortedFriendsCache.indexWhere((element) => element.id == friend.id);
     if (sIndex == -1) {
       _sortedFriendsCache.add(friend);
     } else {
@@ -342,7 +354,8 @@ class MessagingClient extends ChangeNotifier {
 
   Future<void> _setupHub() async {
     if (!_apiClient.isAuthenticated) {
-      _logger.info("Tried to connect to Resonite Hub without authentication, this is probably fine for now.");
+      _logger.info(
+          "Tried to connect to Resonite Hub without authentication, this is probably fine for now.");
       return;
     }
     _hubManager.setHeaders(_apiClient.authorizationHeader);
@@ -350,8 +363,10 @@ class MessagingClient extends ChangeNotifier {
     _hubManager.setHandler(EventTarget.messageSent, _onMessageSent);
     _hubManager.setHandler(EventTarget.receiveMessage, _onReceiveMessage);
     _hubManager.setHandler(EventTarget.messagesRead, _onMessagesRead);
-    _hubManager.setHandler(EventTarget.receiveStatusUpdate, _onReceiveStatusUpdate);
-    _hubManager.setHandler(EventTarget.receiveSessionUpdate, _onReceiveSessionUpdate);
+    _hubManager.setHandler(
+        EventTarget.receiveStatusUpdate, _onReceiveStatusUpdate);
+    _hubManager.setHandler(
+        EventTarget.receiveSessionUpdate, _onReceiveSessionUpdate);
     _hubManager.setHandler(EventTarget.removeSession, _onRemoveSession);
 
     await _hubManager.start();
@@ -366,11 +381,12 @@ class MessagingClient extends ChangeNotifier {
         _initStatus = "";
         notifyListeners();
         await _refreshUnreads();
-        _unreadSafeguard = Timer.periodic(_unreadSafeguardDuration, (timer) => _refreshUnreads());
+        _unreadSafeguard = Timer.periodic(
+            _unreadSafeguardDuration, (timer) => _refreshUnreads());
         _hubManager.send("RequestStatus", arguments: [null, false]);
-        final lastOnline =
-            OnlineStatus.values.elementAtOrNull(_settingsClient.currentSettings.lastOnlineStatus.valueOrDefault);
-        await setOnlineStatus(lastOnline ?? OnlineStatus.online);
+        final lastOnline = OnlineStatus.values.elementAtOrNull(
+            _settingsClient.currentSettings.lastOnlineStatus.valueOrDefault);
+        await setOnlineStatus(lastOnline ?? OnlineStatus.Online);
         _statusHeartbeat = Timer.periodic(_statusHeartbeatDuration, (timer) {
           setOnlineStatus(_userStatus.onlineStatus);
         });
@@ -379,14 +395,16 @@ class MessagingClient extends ChangeNotifier {
   }
 
   Map<String, Session> createSessionMap(String salt) {
-    return _sessionMap.map((key, value) => MapEntry(CryptoHelper.idHash(value.id + salt), value));
+    return _sessionMap.map(
+        (key, value) => MapEntry(CryptoHelper.idHash(value.id + salt), value));
   }
 
   void _onMessageSent(List args) {
     if (_disposed) return;
     final msg = args[0];
     final message = Message.fromMap(msg, withState: MessageState.sent);
-    final cache = getUserMessageCache(message.recipientId) ?? _createUserMessageCache(message.recipientId);
+    final cache = getUserMessageCache(message.recipientId) ??
+        _createUserMessageCache(message.recipientId);
     cache.addMessage(message);
     notifyListeners();
   }
@@ -394,7 +412,8 @@ class MessagingClient extends ChangeNotifier {
   void _onReceiveMessage(List args) {
     final msg = args[0];
     final message = Message.fromMap(msg);
-    final cache = getUserMessageCache(message.senderId) ?? _createUserMessageCache(message.senderId);
+    final cache = getUserMessageCache(message.senderId) ??
+        _createUserMessageCache(message.senderId);
     cache.addMessage(message);
     if (message.senderId != selectedFriend?.id) {
       addUnread(message);
@@ -403,7 +422,10 @@ class MessagingClient extends ChangeNotifier {
         updateFriendStatus(friend);
       }
     } else {
-      markMessagesRead(MarkReadBatch(senderId: message.senderId, ids: [message.id], readTime: DateTime.now()));
+      markMessagesRead(MarkReadBatch(
+          senderId: message.senderId,
+          ids: [message.id],
+          readTime: DateTime.now()));
     }
     notifyListeners();
   }
@@ -422,20 +444,24 @@ class MessagingClient extends ChangeNotifier {
 
   void _onReceiveStatusUpdate(List args) {
     if (!hasListeners) return;
-    
+
     final statusUpdate = args[0];
     var status = UserStatus.fromMap(statusUpdate);
     final sessionMap = createSessionMap(status.hashSalt);
     status = status.copyWith(
         decodedSessions: status.sessions
-            .map((e) => sessionMap[e.sessionHash] ?? Session.none().copyWith(accessLevel: e.accessLevel))
+            .map((e) =>
+                sessionMap[e.sessionHash] ??
+                Session.none().copyWith(accessLevel: e.accessLevel))
             .toList());
-    final friend = getAsFriend(statusUpdate["userId"])?.copyWith(userStatus: status);
+    final friend =
+        getAsFriend(statusUpdate["userId"])?.copyWith(userStatus: status);
     if (friend != null) {
       _updateContact(friend);
     }
     for (var session in status.sessions) {
-      if (session.broadcastKey != null && _knownSessionKeys.add(session.broadcastKey ?? "")) {
+      if (session.broadcastKey != null &&
+          _knownSessionKeys.add(session.broadcastKey ?? "")) {
         _hubManager.send("ListenOnKey", arguments: [session.broadcastKey]);
       }
     }
@@ -444,7 +470,7 @@ class MessagingClient extends ChangeNotifier {
 
   void _onReceiveSessionUpdate(dynamic data) {
     if (!hasListeners) return;
-    
+
     final sessionUpdate = data[0];
     final session = Session.fromMap(sessionUpdate);
     _sessionMap[session.id] = session;
@@ -458,7 +484,8 @@ class MessagingClient extends ChangeNotifier {
   }
 
   Future<void> toggleFriendPin(Friend friend) async {
-    final updatedProfile = friend.userProfile.copyWith(isPinned: !friend.isPinned);
+    final updatedProfile =
+        friend.userProfile.copyWith(isPinned: !friend.isPinned);
     final updatedFriend = friend.copyWith(userProfile: updatedProfile);
     await _updateContact(updatedFriend);
     notifyListeners();
@@ -492,7 +519,7 @@ class MessagingClient extends ChangeNotifier {
           // Ignore delete errors
         }
       }
-      
+
       _messageBox = await Hive.openBox(_messageBoxKey);
     } catch (e) {
       _initStatus = "Failed to initialize message storage: $e";

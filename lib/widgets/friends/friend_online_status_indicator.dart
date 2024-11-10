@@ -24,7 +24,9 @@ class FriendOnlineStatusIndicator extends StatelessWidget {
           )
         : Icon(
             friend.isOffline ? Icons.circle_outlined : Icons.circle,
-            color: friend.isHeadless ? const Color.fromARGB(255, 41, 77, 92) : onlineStatus.color(context),
+            color: friend.isHeadless
+                ? const Color.fromARGB(255, 41, 77, 92)
+                : onlineStatus.color(context),
             size: 10,
           );
   }

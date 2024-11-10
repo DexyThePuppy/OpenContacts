@@ -6,9 +6,9 @@ import 'package:open_contacts/models/session_metadata.dart';
 import 'package:open_contacts/models/users/online_status.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter/material.dart';
+import 'package:open_contacts/badges_db.dart' as badges_db;
 
-enum UserSessionType
-{
+enum UserSessionType {
   unknown,
   graphicalClient,
   chatClient,
@@ -16,7 +16,8 @@ enum UserSessionType
   bot;
 
   factory UserSessionType.fromString(String? text) {
-    return UserSessionType.values.firstWhere((element) => element.name.toLowerCase() == text?.toLowerCase(),
+    return UserSessionType.values.firstWhere(
+      (element) => element.name.toLowerCase() == text?.toLowerCase(),
       orElse: () => UserSessionType.unknown,
     );
   }
@@ -39,6 +40,10 @@ class UserStatus {
   final UserSessionType sessionType;
   final List<Session> decodedSessions;
   final Color? appVersionColor;
+  final String worldName;
+  final String location;
+  final bool? isHost;
+  final List<badges_db.Badge> badges;
 
   const UserStatus({
     required this.userId,
@@ -57,24 +62,27 @@ class UserStatus {
     required this.sessionType,
     this.decodedSessions = const [],
     this.appVersionColor,
+    this.worldName = '',
+    this.location = '',
+    this.isHost,
+    this.badges = const [],
   });
 
-  factory UserStatus.initial() =>
-      UserStatus.empty().copyWith(
+  factory UserStatus.initial() => UserStatus.empty().copyWith(
         compatibilityHash: Config.latestCompatHash,
-        onlineStatus: OnlineStatus.online,
+        onlineStatus: OnlineStatus.Online,
         hashSalt: CryptoHelper.cryptoToken(),
         outputDevice: "Unknown",
         userSessionId: const Uuid().v4().toString(),
         sessionType: UserSessionType.chatClient,
         isPresent: true,
         appVersionColor: Colors.green,
+        badges: const [],
       );
 
-  factory UserStatus.empty() =>
-      UserStatus(
+  factory UserStatus.empty() => UserStatus(
         userId: "",
-        onlineStatus: OnlineStatus.offline,
+        onlineStatus: OnlineStatus.Offline,
         lastStatusChange: DateTime.now(),
         lastPresenceTimestamp: DateTime.now(),
         userSessionId: "",
@@ -89,20 +97,35 @@ class UserStatus {
         sessionType: UserSessionType.unknown,
         decodedSessions: const [],
         appVersionColor: null,
+        worldName: '',
+        location: '',
+        isHost: false,
+        badges: const [],
       );
 
   factory UserStatus.fromMap(Map map) {
     final statusString = map["onlineStatus"].toString();
     final status = OnlineStatus.fromString(statusString);
+
+    final List<String> badgeTags =
+        (map["badges"] as List? ?? []).cast<String>();
+    final List<badges_db.Badge> badges =
+        badges_db.BadgesDB.getBadgesForUser(badgeTags);
+
     return UserStatus(
       userId: map["userId"] ?? "",
       onlineStatus: status,
-      lastStatusChange: DateTime.tryParse(map["lastStatusChange"] ?? "") ?? DateTime.now(),
-      lastPresenceTimestamp: DateTime.tryParse(map["lastPresenceTimestamp"] ?? "") ?? DateTime.now(),
+      lastStatusChange:
+          DateTime.tryParse(map["lastStatusChange"] ?? "") ?? DateTime.now(),
+      lastPresenceTimestamp:
+          DateTime.tryParse(map["lastPresenceTimestamp"] ?? "") ??
+              DateTime.now(),
       userSessionId: map["userSessionId"] ?? "",
       isPresent: map["isPresent"] ?? false,
       currentSessionIndex: map["currentSessionIndex"] ?? -1,
-      sessions: (map["sessions"] as List? ?? []).map((e) => SessionMetadata.fromMap(e)).toList(),
+      sessions: (map["sessions"] as List? ?? [])
+          .map((e) => SessionMetadata.fromMap(e))
+          .toList(),
       appVersion: map["appVersion"] ?? "",
       outputDevice: map["outputDevice"] ?? "Unknown",
       isMobile: map["isMobile"] ?? false,
@@ -111,6 +134,10 @@ class UserStatus {
       sessionType: UserSessionType.fromString(map["sessionType"]),
       decodedSessions: const [],
       appVersionColor: _tryParseColor(map["appVersionColor"]),
+      worldName: map["worldName"] ?? '',
+      location: map["location"] ?? '',
+      isHost: map["isHost"] ?? false,
+      badges: badges,
     );
   }
 
@@ -140,16 +167,20 @@ class UserStatus {
       "sessions": shallow
           ? []
           : sessions
-          .map(
-            (e) => e.toMap(),
-      )
-          .toList(),
+              .map(
+                (e) => e.toMap(),
+              )
+              .toList(),
       "appVersion": appVersion,
       "outputDevice": outputDevice,
       "isMobile": isMobile,
       "compatibilityHash": compatibilityHash,
       "sessionType": toBeginningOfSentenceCase(sessionType.name),
       "appVersionColor": appVersionColor?.value,
+      "worldName": worldName,
+      "location": location,
+      "isHost": isHost,
+      "badges": badges.map((b) => b.name.toLowerCase()).toList(),
     };
   }
 
@@ -170,12 +201,17 @@ class UserStatus {
     UserSessionType? sessionType,
     List<Session>? decodedSessions,
     Color? appVersionColor,
+    String? worldName,
+    String? location,
+    bool? isHost,
+    List<badges_db.Badge>? badges,
   }) =>
       UserStatus(
         userId: userId ?? this.userId,
         onlineStatus: onlineStatus ?? this.onlineStatus,
         lastStatusChange: lastStatusChange ?? this.lastStatusChange,
-        lastPresenceTimestamp: lastPresenceTimestamp ?? this.lastPresenceTimestamp,
+        lastPresenceTimestamp:
+            lastPresenceTimestamp ?? this.lastPresenceTimestamp,
         isPresent: isPresent ?? this.isPresent,
         userSessionId: userSessionId ?? this.userSessionId,
         currentSessionIndex: currentSessionIndex ?? this.currentSessionIndex,
@@ -188,5 +224,9 @@ class UserStatus {
         sessionType: sessionType ?? this.sessionType,
         decodedSessions: decodedSessions ?? this.decodedSessions,
         appVersionColor: appVersionColor ?? this.appVersionColor,
+        worldName: worldName ?? this.worldName,
+        location: location ?? this.location,
+        isHost: isHost ?? this.isHost,
+        badges: badges ?? this.badges,
       );
 }

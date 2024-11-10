@@ -29,9 +29,15 @@ import 'package:open_contacts/models/contact_tabs_config.dart';
 import 'models/authentication_data.dart';
 
 final _logger = Logger('main');
+late final ContactTabsConfig tabsConfig;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Load the initial config
+  final jsonString =
+      await rootBundle.loadString('assets/config/contact_tabs.json');
+  tabsConfig = ContactTabsConfig.fromJson(jsonString);
 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -41,19 +47,23 @@ void main() async {
     ),
   );
 
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge, overlays: [SystemUiOverlay.top]);
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge,
+      overlays: [SystemUiOverlay.top]);
 
   await Hive.initFlutter();
 
   final dateFormat = DateFormat.Hms();
-  Logger.root.onRecord.listen(
-      (event) => log("${dateFormat.format(event.time)}: ${event.message}", name: event.loggerName, time: event.time));
+  Logger.root.onRecord.listen((event) => log(
+      "${dateFormat.format(event.time)}: ${event.message}",
+      name: event.loggerName,
+      time: event.time));
 
   final settingsClient = SettingsClient();
   await settingsClient.loadSettings();
-  final newSettings =
-      settingsClient.currentSettings.copyWith(machineId: settingsClient.currentSettings.machineId.valueOrDefault);
-  await settingsClient.changeSettings(newSettings); // Save generated machineId to disk
+  final newSettings = settingsClient.currentSettings.copyWith(
+      machineId: settingsClient.currentSettings.machineId.valueOrDefault);
+  await settingsClient
+      .changeSettings(newSettings); // Save generated machineId to disk
 
   AuthenticationData cachedAuth = AuthenticationData.unauthenticated();
   try {
@@ -64,11 +74,15 @@ void main() async {
     // Still ignore but at least log the error
   }
 
-  runApp(Recon(settingsClient: settingsClient, cachedAuthentication: cachedAuth));
+  runApp(
+      Recon(settingsClient: settingsClient, cachedAuthentication: cachedAuth));
 }
 
 class Recon extends StatefulWidget {
-  const Recon({required this.settingsClient, required this.cachedAuthentication, super.key});
+  const Recon(
+      {required this.settingsClient,
+      required this.cachedAuthentication,
+      super.key});
 
   final SettingsClient settingsClient;
   final AuthenticationData cachedAuthentication;
@@ -78,7 +92,8 @@ class Recon extends StatefulWidget {
 }
 
 class _ReconState extends State<Recon> {
-  final Typography _typography = Typography.material2021(platform: defaultTargetPlatform);
+  final Typography _typography =
+      Typography.material2021(platform: defaultTargetPlatform);
   final ReceivePort _port = ReceivePort();
   late AuthenticationData _authData = widget.cachedAuthentication;
   bool _checkedForUpdate = false;
@@ -88,10 +103,10 @@ class _ReconState extends State<Recon> {
     final settings = ClientHolder.of(context).settingsClient;
     if (_checkedForUpdate) return;
     _checkedForUpdate = true;
-    
+
     GithubApi.getLatestTagName().then((remoteVer) async {
       if (!mounted) return;
-      
+
       final currentVer = (await PackageInfo.fromPlatform()).version;
       SemVer currentSem;
       SemVer remoteSem;
@@ -104,7 +119,8 @@ class _ReconState extends State<Recon> {
       }
 
       try {
-        lastDismissedSem = SemVer.fromString(settings.currentSettings.lastDismissedVersion.valueOrDefault);
+        lastDismissedSem = SemVer.fromString(
+            settings.currentSettings.lastDismissedVersion.valueOrDefault);
       } catch (_) {
         lastDismissedSem = SemVer.zero();
       }
@@ -135,7 +151,8 @@ class _ReconState extends State<Recon> {
   void initState() {
     super.initState();
 
-    IsolateNameServer.registerPortWithName(_port.sendPort, 'downloader_send_port');
+    IsolateNameServer.registerPortWithName(
+        _port.sendPort, 'downloader_send_port');
     _port.listen((dynamic data) {
       // Not useful yet? idk...
       // String id = data[0];
@@ -162,16 +179,17 @@ class _ReconState extends State<Recon> {
         return ClientHolder(
           settingsClient: widget.settingsClient,
           authenticationData: _authData,
-          onLogout: () => setState(() => _authData = AuthenticationData.unauthenticated()),
+          onLogout: () =>
+              setState(() => _authData = AuthenticationData.unauthenticated()),
           child: MultiProvider(
             providers: [
-              ChangeNotifierProvider(create: (context) => ContactTabsConfig(tabs: [
-                ContactTab(id: 'all', label: 'All')
-              ])),
+              ChangeNotifierProvider(create: (context) => tabsConfig),
               ChangeNotifierProvider(
                 create: (context) {
-                  final clientHolder = context.findAncestorWidgetOfExactType<ClientHolder>();
-                  if (clientHolder == null) throw Exception('ClientHolder not found');
+                  final clientHolder =
+                      context.findAncestorWidgetOfExactType<ClientHolder>();
+                  if (clientHolder == null)
+                    throw Exception('ClientHolder not found');
                   return MessagingClient(
                     apiClient: clientHolder.apiClient,
                     settingsClient: clientHolder.settingsClient,
@@ -181,8 +199,10 @@ class _ReconState extends State<Recon> {
               ),
               ChangeNotifierProvider(
                 create: (context) {
-                  final clientHolder = context.findAncestorWidgetOfExactType<ClientHolder>();
-                  if (clientHolder == null) throw Exception('ClientHolder not found');
+                  final clientHolder =
+                      context.findAncestorWidgetOfExactType<ClientHolder>();
+                  if (clientHolder == null)
+                    throw Exception('ClientHolder not found');
                   return SessionClient(
                     apiClient: clientHolder.apiClient,
                     settingsClient: clientHolder.settingsClient,
@@ -192,8 +212,10 @@ class _ReconState extends State<Recon> {
               ),
               ChangeNotifierProvider(
                 create: (context) {
-                  final clientHolder = context.findAncestorWidgetOfExactType<ClientHolder>();
-                  if (clientHolder == null) throw Exception('ClientHolder not found');
+                  final clientHolder =
+                      context.findAncestorWidgetOfExactType<ClientHolder>();
+                  if (clientHolder == null)
+                    throw Exception('ClientHolder not found');
                   return InventoryClient(
                     apiClient: clientHolder.apiClient,
                   );
@@ -201,9 +223,18 @@ class _ReconState extends State<Recon> {
               )
             ],
             child: Builder(builder: (context) {
-              final useSystemColor = ClientHolder.of(context).settingsClient.currentSettings.useSystemColor.valueOrDefault;
-              final customColor = Color(ClientHolder.of(context).settingsClient.currentSettings.customColor.valueOrDefault ?? Colors.blue.value);
-              
+              final useSystemColor = ClientHolder.of(context)
+                  .settingsClient
+                  .currentSettings
+                  .useSystemColor
+                  .valueOrDefault;
+              final customColor = Color(ClientHolder.of(context)
+                      .settingsClient
+                      .currentSettings
+                      .customColor
+                      .valueOrDefault ??
+                  Colors.blue.value);
+
               return DynamicColorBuilder(
                 builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
                   return MaterialApp(
@@ -212,31 +243,48 @@ class _ReconState extends State<Recon> {
                     theme: ThemeData(
                       useMaterial3: true,
                       textTheme: _typography.black,
-                      colorScheme: useSystemColor 
-                          ? (lightDynamic ?? ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.light))
-                          : ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.light),
+                      colorScheme: useSystemColor
+                          ? (lightDynamic ??
+                              ColorScheme.fromSeed(
+                                  seedColor: customColor,
+                                  brightness: Brightness.light))
+                          : ColorScheme.fromSeed(
+                              seedColor: customColor,
+                              brightness: Brightness.light),
                     ),
                     darkTheme: ThemeData(
                       useMaterial3: true,
                       textTheme: _typography.white,
                       colorScheme: useSystemColor
-                          ? (darkDynamic ?? ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.dark))
-                          : ColorScheme.fromSeed(seedColor: customColor, brightness: Brightness.dark),
+                          ? (darkDynamic ??
+                              ColorScheme.fromSeed(
+                                  seedColor: customColor,
+                                  brightness: Brightness.dark))
+                          : ColorScheme.fromSeed(
+                              seedColor: customColor,
+                              brightness: Brightness.dark),
                     ),
-                    themeMode: ThemeMode.values[ClientHolder.of(context).settingsClient.currentSettings.themeMode.valueOrDefault],
+                    themeMode: ThemeMode.values[ClientHolder.of(context)
+                        .settingsClient
+                        .currentSettings
+                        .themeMode
+                        .valueOrDefault],
                     home: Builder(
                       // Builder is necessary here since we need a context which has access to the ClientHolder
                       builder: (context) {
                         showUpdateDialogOnFirstBuild(context);
-                          return _authData.isAuthenticated
+                        return _authData.isAuthenticated
                             ? AnnotatedRegion<SystemUiOverlayStyle>(
                                 value: SystemUiOverlayStyle(
-                                  statusBarColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                                  statusBarColor: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest,
                                 ),
                                 child: const Home(),
                               )
                             : LoginScreen(
-                                onLoginSuccessful: (AuthenticationData authData) async {
+                                onLoginSuccessful:
+                                    (AuthenticationData authData) async {
                                   if (authData.isAuthenticated) {
                                     setState(() {
                                       _authData = authData;

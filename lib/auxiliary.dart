@@ -1,40 +1,44 @@
 import 'package:open_contacts/config.dart';
-import 'package:flutter/material.dart';
-import 'package:path/path.dart' as p;
+import 'package:flutter/material.dart' as flutter;
 import 'package:html/parser.dart' as htmlparser;
+import 'package:image/image.dart' as img;
+import 'package:flutter/material.dart';
 
 class Aux {
   static String resdbToHttp(String? resdb) {
     if (resdb == null || resdb.isEmpty) {
       return "https://i2.wp.com/vdostavka.ru/wp-content/uploads/2019/05/no-avatar.png";
     }
-    
+
     // Handle invalid URLs or malformed strings
     try {
       if (resdb.startsWith("http")) {
         Uri.parse(resdb); // Validate URL format
         return resdb;
       }
-      
-      final filename = p.basenameWithoutExtension(resdb).trim();
-      if (filename.isEmpty) {
+
+      // Remove resdb:/// prefix and any file extension
+      final cleanPath = resdb
+          .replaceFirst('resdb:///', '')
+          .replaceAll(RegExp(r'\..*$'), '') // Remove any file extension
+          .trim();
+
+      if (cleanPath.isEmpty) {
         return "https://i2.wp.com/vdostavka.ru/wp-content/uploads/2019/05/no-avatar.png";
       }
-      
-      // Check file extension
-      final extension = p.extension(resdb).toLowerCase();
-      if (extension == '.exr') {
-        // For EXR files, we'll need to convert them using image_v3
-        // The URL will still point to the EXR file, but our image loading widget
-        // will need to handle the conversion
-        return "${Config.skyfrostAssetsUrl}/$filename$extension";
-      }
-      
-      // For other formats (including .webp), use the standard URL
-      return "${Config.skyfrostAssetsUrl}/$filename";
+
+      // For other formats, use the standard URL
+      return "${Config.skyfrostAssetsUrl}/$cleanPath";
     } catch (e) {
       return "https://i2.wp.com/vdostavka.ru/wp-content/uploads/2019/05/no-avatar.png";
     }
+  }
+
+  static Widget imageWidget(String? resdb) {
+    final imageUrl = resdbToHttp(resdb);
+    return flutter.Image.network(
+      imageUrl,
+    );
   }
 }
 
@@ -78,12 +82,12 @@ extension DateTimeX on DateTime {
   static DateTime one = DateTime(1);
 }
 
-extension ColorX on Color {
-  Color invert() {
+extension ColorX on flutter.Color {
+  flutter.Color invert() {
     final r = 255 - red;
     final g = 255 - green;
     final b = 255 - blue;
 
-    return Color.fromARGB((opacity * 255).round(), r, g, b);
+    return flutter.Color.fromARGB((opacity * 255).round(), r, g, b);
   }
 }

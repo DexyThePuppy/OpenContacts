@@ -27,7 +27,8 @@ class SettingsEntry<T> {
 
   T get valueOrDefault => value ?? deflt;
 
-  SettingsEntry<T> withValue({required T newValue}) => SettingsEntry(value: newValue, deflt: deflt);
+  SettingsEntry<T> withValue({required T newValue}) =>
+      SettingsEntry(value: newValue, deflt: deflt);
 
   SettingsEntry<T> passThrough(T? newValue) {
     return newValue == null ? this : this.withValue(newValue: newValue);
@@ -63,20 +64,31 @@ class Settings {
     SettingsEntry<int?>? customColor,
     SettingsEntry<bool>? useSystemColor,
     SettingsEntry<int>? lastSelectedPage,
-  })  : notificationsDenied = notificationsDenied ?? const SettingsEntry<bool>(deflt: false),
-        lastOnlineStatus = lastOnlineStatus ?? SettingsEntry<int>(deflt: OnlineStatus.online.index),
-        themeMode = themeMode ?? SettingsEntry<int>(deflt: ThemeMode.dark.index),
-        lastDismissedVersion = lastDismissedVersion ?? SettingsEntry<String>(deflt: SemVer.zero().toString()),
-        machineId = machineId ?? SettingsEntry<String>(deflt: const Uuid().v4()),
-        sessionViewLastMinimumUsers = sessionViewLastMinimumUsers ?? const SettingsEntry<int>(deflt: 0),
-        sessionViewLastIncludeEnded = sessionViewLastIncludeEnded ?? const SettingsEntry<bool>(deflt: false),
-        sessionViewLastIncludeEmpty = sessionViewLastIncludeEmpty ?? const SettingsEntry<bool>(deflt: true),
+  })  : notificationsDenied =
+            notificationsDenied ?? const SettingsEntry<bool>(deflt: false),
+        lastOnlineStatus = lastOnlineStatus ??
+            SettingsEntry<int>(deflt: OnlineStatus.Online.index),
+        themeMode =
+            themeMode ?? SettingsEntry<int>(deflt: ThemeMode.dark.index),
+        lastDismissedVersion = lastDismissedVersion ??
+            SettingsEntry<String>(deflt: SemVer.zero().toString()),
+        machineId =
+            machineId ?? SettingsEntry<String>(deflt: const Uuid().v4()),
+        sessionViewLastMinimumUsers =
+            sessionViewLastMinimumUsers ?? const SettingsEntry<int>(deflt: 0),
+        sessionViewLastIncludeEnded = sessionViewLastIncludeEnded ??
+            const SettingsEntry<bool>(deflt: false),
+        sessionViewLastIncludeEmpty = sessionViewLastIncludeEmpty ??
+            const SettingsEntry<bool>(deflt: true),
         sessionViewLastIncludeIncompatible =
-            sessionViewLastIncludeIncompatible ?? const SettingsEntry<bool>(deflt: false),
+            sessionViewLastIncludeIncompatible ??
+                const SettingsEntry<bool>(deflt: false),
         seedColor = seedColor ?? const SettingsEntry<int>(deflt: 0),
         customColor = customColor ?? const SettingsEntry<int?>(deflt: null),
-        useSystemColor = useSystemColor ?? const SettingsEntry<bool>(deflt: true),
-        lastSelectedPage = lastSelectedPage ?? const SettingsEntry<int>(deflt: 0);
+        useSystemColor =
+            useSystemColor ?? const SettingsEntry<bool>(deflt: true),
+        lastSelectedPage =
+            lastSelectedPage ?? const SettingsEntry<int>(deflt: 0);
 
   factory Settings.fromMap(Map map) {
     return Settings(
@@ -85,10 +97,14 @@ class Settings {
       themeMode: getEntryOrNull<int>(map["themeMode"]),
       lastDismissedVersion: getEntryOrNull<String>(map["lastDismissedVersion"]),
       machineId: getEntryOrNull<String>(map["machineId"]),
-      sessionViewLastMinimumUsers: getEntryOrNull<int>(map["sessionViewLastMinimumUsers"]),
-      sessionViewLastIncludeEnded: getEntryOrNull<bool>(map["sessionViewLastIncludeEnded"]),
-      sessionViewLastIncludeEmpty: getEntryOrNull<bool>(map["sessionViewLastIncludeEmpty"]),
-      sessionViewLastIncludeIncompatible: getEntryOrNull<bool>(map["sessionViewLastIncludeIncompatible"]),
+      sessionViewLastMinimumUsers:
+          getEntryOrNull<int>(map["sessionViewLastMinimumUsers"]),
+      sessionViewLastIncludeEnded:
+          getEntryOrNull<bool>(map["sessionViewLastIncludeEnded"]),
+      sessionViewLastIncludeEmpty:
+          getEntryOrNull<bool>(map["sessionViewLastIncludeEmpty"]),
+      sessionViewLastIncludeIncompatible:
+          getEntryOrNull<bool>(map["sessionViewLastIncludeIncompatible"]),
       seedColor: getEntryOrNull<int>(map["seedColor"]),
       customColor: getEntryOrNull<int?>(map["customColor"]),
       useSystemColor: getEntryOrNull<bool>(map["useSystemColor"]),
@@ -115,7 +131,8 @@ class Settings {
       "sessionViewLastMinimumUsers": sessionViewLastMinimumUsers.toMap(),
       "sessionViewLastIncludeEnded": sessionViewLastIncludeEnded.toMap(),
       "sessionViewLastIncludeEmpty": sessionViewLastIncludeEmpty.toMap(),
-      "sessionViewLastIncludeIncompatible": sessionViewLastIncludeIncompatible.toMap(),
+      "sessionViewLastIncludeIncompatible":
+          sessionViewLastIncludeIncompatible.toMap(),
       "seedColor": seedColor.toMap(),
       "customColor": customColor.toMap(),
       "useSystemColor": useSystemColor.toMap(),
@@ -141,16 +158,25 @@ class Settings {
     int? lastSelectedPage,
   }) {
     return Settings(
-      notificationsDenied: this.notificationsDenied.passThrough(notificationsDenied),
+      notificationsDenied:
+          this.notificationsDenied.passThrough(notificationsDenied),
       lastOnlineStatus: this.lastOnlineStatus.passThrough(lastOnlineStatus),
       themeMode: this.themeMode.passThrough(themeMode),
-      lastDismissedVersion: this.lastDismissedVersion.passThrough(lastDismissedVersion),
+      lastDismissedVersion:
+          this.lastDismissedVersion.passThrough(lastDismissedVersion),
       machineId: this.machineId.passThrough(machineId),
-      sessionViewLastMinimumUsers: this.sessionViewLastMinimumUsers.passThrough(sessionViewLastMinimumUsers),
-      sessionViewLastIncludeEnded: this.sessionViewLastIncludeEnded.passThrough(sessionViewLastIncludeEnded),
-      sessionViewLastIncludeEmpty: this.sessionViewLastIncludeEmpty.passThrough(sessionViewLastIncludeEmpty),
-      sessionViewLastIncludeIncompatible:
-          this.sessionViewLastIncludeIncompatible.passThrough(sessionViewLastIncludeIncompatible),
+      sessionViewLastMinimumUsers: this
+          .sessionViewLastMinimumUsers
+          .passThrough(sessionViewLastMinimumUsers),
+      sessionViewLastIncludeEnded: this
+          .sessionViewLastIncludeEnded
+          .passThrough(sessionViewLastIncludeEnded),
+      sessionViewLastIncludeEmpty: this
+          .sessionViewLastIncludeEmpty
+          .passThrough(sessionViewLastIncludeEmpty),
+      sessionViewLastIncludeIncompatible: this
+          .sessionViewLastIncludeIncompatible
+          .passThrough(sessionViewLastIncludeIncompatible),
       seedColor: this.seedColor.passThrough(seedColor),
       customColor: this.customColor.passThrough(customColor),
       useSystemColor: this.useSystemColor.passThrough(useSystemColor),

@@ -10,17 +10,18 @@ import 'package:open_contacts/widgets/formatted_text.dart';
 import 'package:open_contacts/string_formatter.dart';
 import 'dart:convert';
 import 'dart:ui';
+import 'package:open_contacts/badges_db.dart';
 
 final log = Logger('UserProfileDialog');
 
 class UserProfileDialog extends StatefulWidget {
   const UserProfileDialog({
-    super.key, 
+    super.key,
     this.friend,
     this.user,
     this.id,
-
-  }) : assert(friend != null || user != null, 'Either friend or user must be provided');
+  }) : assert(friend != null || user != null,
+            'Either friend or user must be provided');
 
   final Friend? friend;
   final User? user;
@@ -52,7 +53,8 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
       client.checkResponse(response);
       final data = jsonDecode(response.body);
       if (mounted) {
-        setState(() => registrationDate = DateTime.parse(data['registrationDate']));
+        setState(
+            () => registrationDate = DateTime.parse(data['registrationDate']));
       }
     } catch (e) {
       log.warning('Failed to load registration date', e);
@@ -64,7 +66,7 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
     final tt = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
     final displayUser = (widget.friend ?? widget.user!) as dynamic;
-    
+
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
@@ -90,7 +92,53 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
                   ),
                 ),
               ),
-            
+
+            // Add menu button
+            Positioned(
+              top: 8,
+              right: 8,
+              child: IconButton(
+                icon: const Icon(Icons.more_vert),
+                onPressed: () async {
+                  final displayUser =
+                      (widget.friend ?? widget.user!) as dynamic;
+                  final client = ClientHolder.of(context).apiClient;
+
+                  try {
+                    final response =
+                        await client.get("/users/${displayUser.id}");
+                    client.checkResponse(response);
+                    final data = jsonDecode(response.body);
+
+                    if (!context.mounted) return;
+
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Raw User Data"),
+                        content: SingleChildScrollView(
+                          child: SelectableText(
+                            const JsonEncoder.withIndent('  ').convert(data),
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text("Close"),
+                          ),
+                        ],
+                      ),
+                    );
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Failed to fetch user data: $e")),
+                    );
+                  }
+                },
+              ),
+            ),
+
             // Content
             Padding(
               padding: const EdgeInsets.all(24),
@@ -102,7 +150,8 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
                   Row(
                     children: [
                       GenericAvatar(
-                        imageUri: Aux.resdbToHttp(displayUser.userProfile?.iconUrl),
+                        imageUri:
+                            Aux.resdbToHttp(displayUser.userProfile?.iconUrl),
                         radius: 32,
                       ),
                       const SizedBox(width: 16),
@@ -117,23 +166,52 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                            // Add badges if they exist
+                            if (displayUser.userProfile?.displayBadges !=
+                                    null &&
+                                displayUser
+                                    .userProfile!.displayBadges.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Wrap(
+                                  spacing: 4,
+                                  runSpacing: 4,
+                                  children: BadgesDB.getBadgesForUser(
+                                          displayUser
+                                              .userProfile!.displayBadges)
+                                      .map<Widget>((badge) => Tooltip(
+                                            message: badge.name,
+                                            child: Image.network(
+                                              Aux.resdbToHttp(badge.assetUrl),
+                                              height: 24,
+                                              width: 24,
+                                            ),
+                                          ))
+                                      .toList(),
+                                ),
+                              ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                  
+
                   // World status (if available)
                   if (widget.friend?.userStatus.currentSessionIndex != null &&
                       widget.friend!.userStatus.currentSessionIndex >= 0 &&
                       widget.friend!.userStatus.decodedSessions.isNotEmpty &&
-                      widget.friend!.userStatus.decodedSessions[
-                        widget.friend!.userStatus.currentSessionIndex
-                      ].name.isNotEmpty) ...[
+                      widget
+                          .friend!
+                          .userStatus
+                          .decodedSessions[
+                              widget.friend!.userStatus.currentSessionIndex]
+                          .name
+                          .isNotEmpty) ...[
                     const SizedBox(height: 24),
                     Container(
                       decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest.withOpacity(0.8),
+                        color: colorScheme.surfaceContainerHighest
+                            .withOpacity(0.8),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       padding: const EdgeInsets.all(16),
@@ -141,23 +219,33 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           FormattedText(
-                            FormatNode.fromText(widget.friend!.userStatus.decodedSessions[
-                              widget.friend!.userStatus.currentSessionIndex
-                            ].name),
+                            FormatNode.fromText(widget
+                                .friend!
+                                .userStatus
+                                .decodedSessions[widget
+                                    .friend!.userStatus.currentSessionIndex]
+                                .name),
                             style: tt.titleMedium?.copyWith(
                               color: colorScheme.onSurface,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          if (widget.friend!.userStatus.decodedSessions[
-                            widget.friend!.userStatus.currentSessionIndex
-                          ].description.isNotEmpty)
+                          if (widget
+                              .friend!
+                              .userStatus
+                              .decodedSessions[
+                                  widget.friend!.userStatus.currentSessionIndex]
+                              .description
+                              .isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: FormattedText(
-                                FormatNode.fromText(widget.friend!.userStatus.decodedSessions[
-                                  widget.friend!.userStatus.currentSessionIndex
-                                ].description),
+                                FormatNode.fromText(widget
+                                    .friend!
+                                    .userStatus
+                                    .decodedSessions[widget
+                                        .friend!.userStatus.currentSessionIndex]
+                                    .description),
                                 style: tt.bodyMedium?.copyWith(
                                   color: colorScheme.onSurfaceVariant,
                                 ),
@@ -167,12 +255,13 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
                       ),
                     ),
                   ],
-                  
+
                   // User info section
                   const SizedBox(height: 24),
                   Container(
                     decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest.withOpacity(0.8),
+                      color:
+                          colorScheme.surfaceContainerHighest.withOpacity(0.8),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     padding: const EdgeInsets.all(16),
@@ -189,9 +278,9 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
                         _buildInfoRow(
                           context,
                           "Registered",
-                          registrationDate != null 
-                            ? DateFormat.yMMMd().format(registrationDate!)
-                            : null,
+                          registrationDate != null
+                              ? DateFormat.yMMMd().format(registrationDate!)
+                              : null,
                           colorScheme,
                           tt,
                         ),
@@ -224,17 +313,17 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
           ),
         ),
         value != null
-          ? Text(
-              value,
-              style: tt.bodyMedium?.copyWith(
-                color: colorScheme.onSurface,
-                fontWeight: FontWeight.w500,
+            ? Text(
+                value,
+                style: tt.bodyMedium?.copyWith(
+                  color: colorScheme.onSurface,
+                  fontWeight: FontWeight.w500,
+                ),
+              )
+            : CircularProgressIndicator.adaptive(
+                valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
               ),
-            )
-          : CircularProgressIndicator.adaptive(
-              valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
-            ),
       ],
     );
   }
-} 
+}

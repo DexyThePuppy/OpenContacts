@@ -33,7 +33,8 @@ class _HomeState extends State<Home> {
       if (!mounted) return;
       final settingsClient = ClientHolder.of(context).settingsClient;
       setState(() {
-        _selectedPage = settingsClient.currentSettings.lastSelectedPage.valueOrDefault;
+        _selectedPage =
+            settingsClient.currentSettings.lastSelectedPage.valueOrDefault;
       });
       _pageController.jumpToPage(_selectedPage);
     });
@@ -48,8 +49,7 @@ class _HomeState extends State<Home> {
   void _changePage(int index) async {
     final settingsClient = ClientHolder.of(context).settingsClient;
     await settingsClient.changeSettings(
-      settingsClient.currentSettings.copyWith(lastSelectedPage: index)
-    );
+        settingsClient.currentSettings.copyWith(lastSelectedPage: index));
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 200),

@@ -1,53 +1,51 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 class GenericAvatar extends StatelessWidget {
   const GenericAvatar({
     required this.imageUri,
     this.radius = 20,
-    this.placeholderIcon = Icons.person,
+    this.placeholderIcon,
     this.foregroundColor,
-    this.fit,
     super.key,
   });
 
-  final String? imageUri;
-  final double? radius;
-  final IconData placeholderIcon;
+  final String imageUri;
+  final double radius;
+  final IconData? placeholderIcon;
   final Color? foregroundColor;
-  final BoxFit? fit;
 
   @override
   Widget build(BuildContext context) {
-    return imageUri == null || imageUri!.isEmpty
-        ? CircleAvatar(
-            radius: radius,
-            child: Icon(placeholderIcon),
-          )
-        : CachedNetworkImage(
-            imageUrl: imageUri ?? 'https://assets.resonite.com/images/default_user.png',
-            imageBuilder: (context, imageProvider) => radius != null
-                ? CircleAvatar(
-                    radius: radius,
-                    backgroundImage: imageProvider,
-                  )
-                : Image(
-                    image: imageProvider,
-                    fit: fit ?? BoxFit.cover,
-                  ),
-            errorWidget: (context, url, error) {
-              return CircleAvatar(
-                radius: radius,
-                child: Icon(placeholderIcon, color: foregroundColor),
-              );
-            },
-            placeholder: (context, url) => CircleAvatar(
-              radius: radius,
+    return Container(
+      width: radius * 2,
+      height: radius * 2,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(radius * 0.5),
+        image: imageUri.isNotEmpty
+            ? DecorationImage(
+                image: NetworkImage(imageUri),
+                fit: BoxFit.cover,
+                onError: (exception, stackTrace) {
+                  // Handle error silently
+                },
+              )
+            : null,
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+          width: 1,
+        ),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      ),
+      child: imageUri.isEmpty || placeholderIcon != null
+          ? Center(
               child: Icon(
-                Icons.person,
-                color: foregroundColor ?? Theme.of(context).colorScheme.onSurface,
+                placeholderIcon ?? Icons.person,
+                size: radius,
+                color: foregroundColor ??
+                    Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-            ),
-          );
+            )
+          : null,
+    );
   }
 }

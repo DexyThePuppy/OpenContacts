@@ -18,6 +18,7 @@ class Friend implements Comparable {
   final DateTime latestMessageTime;
   final List<String> categories;
   final DateTime registrationDate;
+  final List<SupporterMetadata>? supporterMetadata;
 
   const Friend({
     required this.id,
@@ -29,14 +30,17 @@ class Friend implements Comparable {
     required this.latestMessageTime,
     required this.registrationDate,
     this.categories = const [],
+    this.supporterMetadata,
   });
 
   bool get isHeadless => userStatus.sessionType == UserSessionType.headless;
 
-  bool get isBot => userStatus.sessionType == UserSessionType.bot || id == _resoniteBotId;
+  bool get isBot =>
+      userStatus.sessionType == UserSessionType.bot || id == _resoniteBotId;
 
   bool get isOffline =>
-      (userStatus.onlineStatus == OnlineStatus.offline || userStatus.onlineStatus == OnlineStatus.invisible) &&
+      (userStatus.onlineStatus == OnlineStatus.Offline ||
+          userStatus.onlineStatus == OnlineStatus.Invisible) &&
       !isBot &&
       !isHeadless;
 
@@ -45,12 +49,15 @@ class Friend implements Comparable {
   bool get isPinned => userProfile.isPinned ?? false;
 
   factory Friend.fromMap(Map map) {
-    var userStatus = map["userStatus"] == null ? UserStatus.empty() : UserStatus.fromMap(map["userStatus"]);
-    
+    var userStatus = map["userStatus"] == null
+        ? UserStatus.empty()
+        : UserStatus.fromMap(map["userStatus"]);
+
     // Get registration date from the user data
     DateTime registrationDate;
     try {
-      registrationDate = DateTime.tryParse(map["registrationDate"] ?? "") ?? DateTimeX.epoch;
+      registrationDate =
+          DateTime.tryParse(map["registrationDate"] ?? "") ?? DateTimeX.epoch;
     } catch (e) {
       print('Error parsing registration date: $e');
       registrationDate = DateTimeX.epoch;
@@ -60,7 +67,9 @@ class Friend implements Comparable {
       id: map["id"] ?? "",
       username: map["contactUsername"] ?? map["username"] ?? "",
       ownerId: map["ownerId"] ?? map["id"] ?? "",
-      userStatus: map["id"] == _resoniteBotId ? userStatus.copyWith(onlineStatus: OnlineStatus.online) : userStatus,
+      userStatus: map["id"] == _resoniteBotId
+          ? userStatus.copyWith(onlineStatus: OnlineStatus.Online)
+          : userStatus,
       userProfile: UserProfile.fromMap(map["profile"]),
       contactStatus: FriendStatus.fromString(map["contactStatus"] ?? ""),
       latestMessageTime: map["latestMessageTime"] == null
@@ -68,6 +77,8 @@ class Friend implements Comparable {
           : DateTime.parse(map["latestMessageTime"]),
       registrationDate: registrationDate,
       categories: List<String>.from(map["categories"] ?? []),
+      supporterMetadata:
+          List<SupporterMetadata>.from(map["supporterMetadata"] ?? []),
     );
   }
 
@@ -87,16 +98,19 @@ class Friend implements Comparable {
       latestMessageTime: DateTimeX.epoch,
       registrationDate: DateTimeX.epoch,
       categories: const [],
+      supporterMetadata: const [],
     );
   }
 
   bool get isEmpty => id == _emptyId;
 
-  static Future<Friend> fromMapWithRegistrationDate(Map map, ApiClient client) async {
+  static Future<Friend> fromMapWithRegistrationDate(
+      Map map, ApiClient client) async {
     Friend friend = Friend.fromMap(map);
     if (friend.registrationDate == DateTimeX.epoch) {
       try {
-        final registrationDate = await UserApi.getRegistrationDate(client, friend.id);
+        final registrationDate =
+            await UserApi.getRegistrationDate(client, friend.id);
         return friend.copyWith(registrationDate: registrationDate);
       } catch (e) {
         print('Error fetching registration date: $e');
@@ -126,6 +140,7 @@ class Friend implements Comparable {
       latestMessageTime: latestMessageTime ?? this.latestMessageTime,
       registrationDate: registrationDate ?? this.registrationDate,
       categories: this.categories,
+      supporterMetadata: this.supporterMetadata,
     );
   }
 
@@ -140,6 +155,7 @@ class Friend implements Comparable {
       "latestMessageTime": latestMessageTime.toIso8601String(),
       "registrationDate": registrationDate.toIso8601String(),
       "categories": categories,
+      "supporterMetadata": supporterMetadata,
     };
   }
 
