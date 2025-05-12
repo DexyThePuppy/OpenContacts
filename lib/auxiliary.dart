@@ -37,6 +37,7 @@ class Aux {
   }
 
   /// Get a URL for a user's profile image - synchronous version.
+  /// Note: This doesn't check cache - use getProfileImageUrlAsync when possible.
   static String getProfileImageUrl(dynamic userProfile) {
     return resdbToHttp(userProfile?.iconUrl);
   }
@@ -86,6 +87,26 @@ class Aux {
     final imageUrl = resdbToHttp(resdb);
     return flutter.Image.network(
       imageUrl,
+    );
+  }
+  
+  /// Creates an image widget that attempts to use cached version first
+  /// if userId is provided.
+  static Widget cachedImageWidget(String? resdb, {String? userId}) {
+    if (userId == null) {
+      return imageWidget(resdb);
+    }
+    
+    return FutureBuilder<ImageProvider>(
+      future: getProfileImageProvider(null, userId: userId),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return Image(image: snapshot.data!);
+        } else {
+          // Fall back to network image while loading
+          return imageWidget(resdb);
+        }
+      },
     );
   }
 
