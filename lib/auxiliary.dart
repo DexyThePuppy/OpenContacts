@@ -1,8 +1,10 @@
+import 'dart:io';
+
 import 'package:open_contacts/config.dart';
 import 'package:flutter/material.dart' as flutter;
 import 'package:html/parser.dart' as htmlparser;
-import 'package:image/image.dart' as img;
 import 'package:flutter/material.dart';
+import 'package:open_contacts/cache/user_cache_manager.dart';
 
 class Aux {
   static String resdbToHttp(String? resdb) {
@@ -34,11 +36,68 @@ class Aux {
     }
   }
 
+  /// Get a URL for a user's profile image - synchronous version.
+  static String getProfileImageUrl(dynamic userProfile) {
+    return resdbToHttp(userProfile?.iconUrl);
+  }
+
+  /// Get a URL for a user's profile image - async version that checks cache first.
+  /// If [userId] is provided, attempts to load from local cache first.
+  static Future<String> getProfileImageUrlAsync(dynamic userProfile, {String? userId}) async {
+    // Try cache first if userId is provided
+    if (userId != null) {
+      // 1. Try local icon file
+      final iconFile = await UserCacheManager.cachedIconFile(userId);
+      if (iconFile != null) {
+        // Return as file:// URL
+        return iconFile.uri.toString();
+      }
+      
+      // 2. Try cached URL from JSON
+      final cached = await UserCacheManager.cachedIconUrl(userId);
+      if (cached != null && cached.isNotEmpty) {
+        return resdbToHttp(cached);
+      }
+    }
+    
+    // Fall back to regular URL
+    return resdbToHttp(userProfile?.iconUrl);
+  }
+
+  /// Asynchronous version that checks cache first if [userId] is provided.
+  /// Returns a FileImage or NetworkImage source for the avatar.
+  static Future<ImageProvider> getProfileImageProvider(dynamic userProfile, {String? userId}) async {
+    if (userId != null) {
+      final source = await UserCacheManager.getCachedIconSource(userId);
+      if (source != null) {
+        if (source.containsKey('file')) {
+          return FileImage(source['file'] as File);
+        } else if (source.containsKey('url')) {
+          return NetworkImage(resdbToHttp(source['url'] as String));
+        }
+      }
+    }
+    
+    // Fall back to regular URL
+    return NetworkImage(resdbToHttp(userProfile?.iconUrl));
+  }
+
   static Widget imageWidget(String? resdb) {
     final imageUrl = resdbToHttp(resdb);
     return flutter.Image.network(
       imageUrl,
     );
+  }
+
+  static int colorToInterger(Color color) {
+    return (255 & 0xff) << 24 |
+        (color.r.toInt() & 0xff) << 16 |
+        (color.g.toInt() & 0xff) << 8 |
+        (color.b.toInt() & 0xff) << 0;
+  }
+
+  static Color apllyOpacity(Color color, int opacity) {
+    return color.withAlpha(opacity);
   }
 }
 
