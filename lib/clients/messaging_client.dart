@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:logging/logging.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -21,33 +20,9 @@ import 'package:open_contacts/models/session.dart';
 import 'package:open_contacts/models/users/friend.dart';
 import 'package:open_contacts/models/users/online_status.dart';
 import 'package:open_contacts/models/users/user_status.dart';
-import 'package:flutter/material.dart';
+import 'package:open_contacts/models/view_modes.dart';
 import 'package:path_provider/path_provider.dart';
-
-enum ViewMode {
-  list,
-  details,
-  tiles,
-  icons;
-
-  IconData get icon {
-    return switch (this) {
-      ViewMode.list => Icons.list,
-      ViewMode.details => Icons.view_agenda,
-      ViewMode.tiles => Icons.grid_view,
-      ViewMode.icons => Icons.apps,
-    };
-  }
-
-  String get label {
-    return switch (this) {
-      ViewMode.list => "List",
-      ViewMode.details => "Details",
-      ViewMode.tiles => "Tiles",
-      ViewMode.icons => "Icons",
-    };
-  }
-}
+import 'package:open_contacts/cache/user_cache_manager.dart';
 
 class MessagingClient extends ChangeNotifier {
   static const Duration _autoRefreshDuration = Duration(seconds: 10);
@@ -157,6 +132,9 @@ class MessagingClient extends ChangeNotifier {
         lastStatusUpdate: lastUpdateUtc);
     for (final friend in friends) {
       await _updateContact(friend);
+      // Trigger background caching of user JSON & icon.
+      unawaited(UserCacheManager.ensureCached(
+          _apiClient, friend.id, friend.userProfile.iconUrl));
     }
 
     _initStatus = "";
@@ -174,7 +152,9 @@ class MessagingClient extends ChangeNotifier {
 
   void markMessagesRead(MarkReadBatch batch) {
     if (_userStatus.onlineStatus == OnlineStatus.Invisible ||
-        _userStatus.onlineStatus == OnlineStatus.Offline) return;
+        _userStatus.onlineStatus == OnlineStatus.Offline) {
+      return;
+    }
     final msgBody = batch.toMap();
     _hubManager.send("MarkMessagesRead", arguments: [msgBody]);
     clearUnreadsForUser(batch.senderId);
@@ -297,7 +277,6 @@ class MessagingClient extends ChangeNotifier {
       case OnlineStatus.Invisible:
         return 3.5;
       case OnlineStatus.Offline:
-      default:
         return 4;
     }
   }
@@ -377,6 +356,9 @@ class MessagingClient extends ChangeNotifier {
         final contacts = rawContacts.map((e) => Friend.fromMap(e)).toList();
         for (final contact in contacts) {
           await _updateContact(contact);
+          // Cache user data for offline usage.
+          unawaited(UserCacheManager.ensureCached(
+              _apiClient, contact.id, contact.userProfile.iconUrl));
         }
         _initStatus = "";
         notifyListeners();

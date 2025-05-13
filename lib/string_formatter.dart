@@ -1,6 +1,5 @@
 import 'package:color/color.dart' as cc;
 import 'package:flutter/material.dart';
-import 'dart:developer';
 
 class FormatNode {
   String text;
@@ -107,7 +106,6 @@ class FormatTag {
         endIndex: startMatch.end,
         format: tag,
       ));
-      log('Parsed tag: $fullTag');
     }
     return spans;
   }

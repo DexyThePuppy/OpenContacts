@@ -22,7 +22,10 @@ class SessionTile extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          GenericAvatar(imageUri: Aux.resdbToHttp(session.thumbnailUrl), placeholderIcon: Icons.no_photography),
+          GenericAvatar(
+            userId: session.id,
+            imageUri: Aux.resdbToHttp(session.thumbnailUrl),
+            placeholderIcon: Icons.no_photography),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0),
             child: Column(

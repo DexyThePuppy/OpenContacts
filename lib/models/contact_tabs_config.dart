@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:open_contacts/models/users/friend.dart';
 import 'package:provider/provider.dart';
@@ -29,14 +28,14 @@ class ContactTab {
 
   Widget buildTabWidget(BuildContext context) {
     return DragTarget<Friend>(
-      onWillAccept: (friend) {
-        return friend != null && !(userIds?.contains(friend.id) ?? false);
+      onWillAcceptWithDetails: (details) {
+        return !(userIds?.contains(details.data.id) ?? false);
       },
-      onAccept: (friend) {
+      onAcceptWithDetails: (details) {
         userIds ??= [];
-        userIds!.add(friend.id);
+        userIds!.add(details.data.id);
         Provider.of<ContactTabsConfig>(context, listen: false)
-            .addUserToTab(friend.id, id);
+            .addUserToTab(details.data.id, id);
       },
       builder: (context, candidateData, rejectedData) {
         final isDraggingOver = candidateData.isNotEmpty;
@@ -50,7 +49,7 @@ class ContactTab {
                 ? Border.all(color: colorScheme.primary, width: 2)
                 : null,
             color:
-                isDraggingOver ? colorScheme.primary.withOpacity(0.15) : null,
+                isDraggingOver ? colorScheme.primary.withAlpha(38) : null,
           ),
           child: Tab(
             icon: icon != null

@@ -63,10 +63,17 @@ class _MyProfileDialogState extends State<MyProfileDialog> {
                         borderRadius: BorderRadius.circular(28),
                         child: ImageFiltered(
                           imageFilter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                          child: Image.network(
-                            Aux.resdbToHttp(profile.userProfile.iconUrl),
+                          child: FutureBuilder<ImageProvider>(
+                            future: Aux.getProfileImageProvider(profile.userProfile, userId: profile.id),
+                            builder: (context, snapshot) {
+                              return Image(
+                                image: snapshot.hasData 
+                                  ? snapshot.data!
+                                  : NetworkImage(Aux.getProfileImageUrl(profile.userProfile)),
                             fit: BoxFit.cover,
                             opacity: const AlwaysStoppedAnimation(0.1),
+                              );
+                            },
                           ),
                         ),
                       ),
@@ -83,7 +90,7 @@ class _MyProfileDialogState extends State<MyProfileDialog> {
                         Row(
                           children: [
                             GenericAvatar(
-                              imageUri: Aux.resdbToHttp(profile.userProfile.iconUrl),
+                              imageUri: Aux.getProfileImageUrl(profile.userProfile),
                               radius: 32,
                             ),
                             const SizedBox(width: 16),
@@ -115,7 +122,7 @@ class _MyProfileDialogState extends State<MyProfileDialog> {
                         // User info section
                         Container(
                           decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest.withOpacity(0.8),
+                            color: colorScheme.surfaceContainerHighest.withAlpha(204),
                             borderRadius: BorderRadius.circular(16),
                           ),
                           padding: const EdgeInsets.all(16),
@@ -144,7 +151,7 @@ class _MyProfileDialogState extends State<MyProfileDialog> {
                             final storage = snapshot.data;
                             return Container(
                               decoration: BoxDecoration(
-                                color: colorScheme.surfaceContainerHighest.withOpacity(0.8),
+                                color: colorScheme.surfaceContainerHighest.withAlpha(204),
                                 borderRadius: BorderRadius.circular(16),
                               ),
                               padding: const EdgeInsets.all(16),
@@ -183,7 +190,8 @@ class _MyProfileDialogState extends State<MyProfileDialog> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value, ColorScheme colorScheme, TextTheme tt) {
+  Widget _buildInfoRow(String label, dynamic value, ColorScheme colorScheme, TextTheme tt) {
+    final String displayValue = value?.toString() ?? "";
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -194,7 +202,7 @@ class _MyProfileDialogState extends State<MyProfileDialog> {
           ),
         ),
         Text(
-          value,
+          displayValue,
           style: tt.bodyMedium?.copyWith(
             color: colorScheme.onSurface,
             fontWeight: FontWeight.w500,

@@ -1,2 +1,4 @@
+@echo off
 call cls
-call flutter run -d windows --web-browser-flag "--auto-open-devtools-for-tabs" --fast-start --debug -v
+echo Starting Flutter app with debugging...
+call flutter run -d windows --verbose --vm-service-port=8181

@@ -12,6 +12,9 @@ import 'package:open_contacts/models/records/record.dart';
 import 'package:open_contacts/widgets/default_error_widget.dart';
 import 'package:open_contacts/widgets/inventory/object_inventory_tile.dart';
 import 'package:open_contacts/widgets/inventory/path_inventory_tile.dart';
+import 'package:open_contacts/models/view_modes.dart';
+import 'package:open_contacts/widgets/inventory/path_item_list_tile.dart';
+import 'package:open_contacts/widgets/inventory/object_item_list_tile.dart';
 
 class InventoryBrowser extends StatefulWidget {
   const InventoryBrowser({super.key});
@@ -74,6 +77,7 @@ class _InventoryBrowserState extends State<InventoryBrowser> with AutomaticKeepA
                         },
                       );
                     }
+                    
                     final directory = snapshot.data;
                     final records = directory?.records ?? [];
                     records.sort(
@@ -88,6 +92,7 @@ class _InventoryBrowserState extends State<InventoryBrowser> with AutomaticKeepA
                             element.recordType != RecordType.link && element.recordType != RecordType.directory)
                         .toList();
                     final pathSegments = directory?.absolutePathSegments ?? [];
+                    
                     return Stack(
                       children: [
                         ListView(
@@ -131,88 +136,12 @@ class _InventoryBrowserState extends State<InventoryBrowser> with AutomaticKeepA
                                     .toList(),
                               ),
                             ),
-                            GridView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              itemCount: paths.length,
-                              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                                maxCrossAxisExtent: 256,
-                                childAspectRatio: 3.5,
-                                crossAxisSpacing: 0,
-                                mainAxisSpacing: 0,
-                              ),
-                              itemBuilder: (context, index) {
-                                final record = paths[index];
-                                return PathInventoryTile(
-                                  record: record,
-                                  selected: iClient.isRecordSelected(record),
-                                  onLongPress: () async {
-                                    iClient.toggleRecordSelected(record);
-                                  },
-                                  onTap: iClient.isAnyRecordSelected
-                                      ? () {
-                                          iClient.toggleRecordSelected(record);
-                                        }
-                                      : () async {
-                                          try {
-                                            await iClient.navigateTo(record);
-                                          } catch (e) {
-                                            if (context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(content: Text("Failed to open directory: $e")),
-                                              );
-                                            }
-                                          }
-                                        },
-                                );
-                              },
-                            ),
-                            GridView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                              physics: const NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              itemCount: objects.length,
-                              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                                maxCrossAxisExtent: 256,
-                                childAspectRatio: 1,
-                                crossAxisSpacing: 0,
-                                mainAxisSpacing: 0,
-                              ),
-                              itemBuilder: (context, index) {
-                                final record = objects[index];
-                                return ObjectInventoryTile(
-                                  record: record,
-                                  selected: iClient.isRecordSelected(record),
-                                  onTap: iClient.isAnyRecordSelected
-                                      ? () async {
-                                          iClient.toggleRecordSelected(record);
-                                        }
-                                      : () async {
-                                          await Navigator.push(
-                                            context,
-                                            MaterialPageRoute( 
-                                              builder: (context) => Scaffold(
-                                                appBar: AppBar(
-                                                  title: Text(record.formattedName.toString()),
-                                                ),
-                                                body: Center (
-                                                  child: CachedNetworkImage(
-                                                    imageUrl: (Aux.resdbToHttp(record.thumbnailUri)),
-                                                    placeholder: (context, url) => const CircularProgressIndicator(),
-                                                    errorWidget: (context, url, error) => const Icon(Icons.error),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                  onLongPress: () async {
-                                    iClient.toggleRecordSelected(record);
-                                  },
-                                );
-                              },
-                            ),
+                            
+                            // Paths section with different views
+                            _buildPathsSection(paths, iClient),
+                            
+                            // Objects section with different views
+                            _buildObjectsSection(objects, iClient),
                           ],
                         ),
                         Align(
@@ -245,6 +174,380 @@ class _InventoryBrowserState extends State<InventoryBrowser> with AutomaticKeepA
             );
           });
     });
+  }
+  
+  Widget _buildPathsSection(List<Record> paths, InventoryClient iClient) {
+    switch (iClient.viewMode) {
+      case ViewMode.list:
+        return ListView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: paths.length,
+          itemBuilder: (context, index) {
+            final record = paths[index];
+            return PathItemListTile(
+              record: record, 
+              isSelected: iClient.isRecordSelected(record),
+              onSelect: () {
+                iClient.toggleRecordSelected(record);
+              },
+              onNavigate: () async {
+                try {
+                  await iClient.navigateTo(record);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Failed to open directory: $e")),
+                    );
+                  }
+                }
+              },
+              isAnySelected: iClient.isAnyRecordSelected,
+            );
+          },
+        );
+        
+      case ViewMode.tiles:
+        return GridView.builder(
+          padding: const EdgeInsets.all(8),
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: paths.length,
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 280,
+            childAspectRatio: 4.0,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemBuilder: (context, index) {
+            final record = paths[index];
+            return PathInventoryTile(
+              record: record,
+              selected: iClient.isRecordSelected(record),
+              onLongPress: () async {
+                iClient.toggleRecordSelected(record);
+              },
+              onTap: iClient.isAnyRecordSelected
+                  ? () {
+                      iClient.toggleRecordSelected(record);
+                    }
+                  : () async {
+                      try {
+                        await iClient.navigateTo(record);
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Failed to open directory: $e")),
+                          );
+                        }
+                      }
+                    },
+            );
+          },
+        );
+        
+      case ViewMode.icons:
+        return GridView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: paths.length,
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 110,
+            childAspectRatio: 0.85,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemBuilder: (context, index) {
+            final record = paths[index];
+            final isDirectory = record.recordType == RecordType.directory;
+            final iconColor = isDirectory ? Colors.amber : Colors.lightBlue;
+            final icon = isDirectory ? Icons.folder : Icons.link;
+            
+            return Card(
+              elevation: 0,
+              clipBehavior: Clip.antiAlias,
+              color: iClient.isRecordSelected(record) 
+                  ? Theme.of(context).colorScheme.primaryContainer 
+                  : Theme.of(context).colorScheme.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: BorderSide(
+                  color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5),
+                  width: 0.5,
+                ),
+              ),
+              child: InkWell(
+                onTap: iClient.isAnyRecordSelected
+                    ? () {
+                        iClient.toggleRecordSelected(record);
+                      }
+                    : () async {
+                        try {
+                          await iClient.navigateTo(record);
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Failed to open directory: $e")),
+                            );
+                          }
+                        }
+                      },
+                onLongPress: () {
+                  iClient.toggleRecordSelected(record);
+                },
+                splashColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                highlightColor: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: iconColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Icon(
+                          icon,
+                          size: 28,
+                          color: iconColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        record.formattedName.toString(),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          letterSpacing: 0.1,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+    }
+  }
+  
+  Widget _buildObjectsSection(List<Record> objects, InventoryClient iClient) {
+    switch (iClient.viewMode) {
+      case ViewMode.list:
+        return ListView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: objects.length,
+          itemBuilder: (context, index) {
+            final record = objects[index];
+            return ObjectItemListTile(
+              record: record,
+              isSelected: iClient.isRecordSelected(record),
+              isAnySelected: iClient.isAnyRecordSelected,
+              onSelect: () {
+                iClient.toggleRecordSelected(record);
+              },
+              onOpen: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute( 
+                    builder: (context) => Scaffold(
+                      appBar: AppBar(
+                        title: Text(record.formattedName.toString()),
+                      ),
+                      body: Center (
+                        child: CachedNetworkImage(
+                          imageUrl: (Aux.resdbToHttp(record.thumbnailUri)),
+                          placeholder: (context, url) => const CircularProgressIndicator(),
+                          errorWidget: (context, url, error) => const Icon(Icons.error),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+        
+      case ViewMode.tiles:
+        return GridView.builder(
+          padding: const EdgeInsets.all(8),
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: objects.length,
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 280,
+            childAspectRatio: 0.8,
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemBuilder: (context, index) {
+            final record = objects[index];
+            return ObjectInventoryTile(
+              record: record,
+              selected: iClient.isRecordSelected(record),
+              onTap: iClient.isAnyRecordSelected
+                  ? () async {
+                      iClient.toggleRecordSelected(record);
+                    }
+                  : () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute( 
+                          builder: (context) => Scaffold(
+                            appBar: AppBar(
+                              title: Text(record.formattedName.toString()),
+                            ),
+                            body: Center (
+                              child: CachedNetworkImage(
+                                imageUrl: (Aux.resdbToHttp(record.thumbnailUri)),
+                                placeholder: (context, url) => CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                errorWidget: (context, url, error) => Icon(
+                                  Icons.broken_image_rounded,
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+              onLongPress: () async {
+                iClient.toggleRecordSelected(record);
+              },
+            );
+          },
+        );
+        
+      case ViewMode.icons:
+        return GridView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: objects.length,
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 100,
+            childAspectRatio: 0.78, 
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+          ),
+          itemBuilder: (context, index) {
+            final record = objects[index];
+            final colorScheme = Theme.of(context).colorScheme;
+            
+            return Card(
+              margin: EdgeInsets.zero,
+              elevation: 0,
+              clipBehavior: Clip.antiAlias,
+              color: iClient.isRecordSelected(record) 
+                  ? colorScheme.primaryContainer 
+                  : colorScheme.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: BorderSide(
+                  color: colorScheme.outlineVariant.withOpacity(0.5),
+                  width: 0.5,
+                ),
+              ),
+              child: InkWell(
+                onTap: iClient.isAnyRecordSelected
+                    ? () {
+                        iClient.toggleRecordSelected(record);
+                      }
+                    : () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute( 
+                            builder: (context) => Scaffold(
+                              appBar: AppBar(
+                                title: Text(record.formattedName.toString()),
+                              ),
+                              body: Center (
+                                child: CachedNetworkImage(
+                                  imageUrl: (Aux.resdbToHttp(record.thumbnailUri)),
+                                  placeholder: (context, url) => CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                  errorWidget: (context, url, error) => Icon(
+                                    Icons.broken_image_rounded,
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                onLongPress: () {
+                  iClient.toggleRecordSelected(record);
+                },
+                splashColor: colorScheme.primary.withOpacity(0.1),
+                highlightColor: colorScheme.primary.withOpacity(0.05),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Fixed height container for image
+                    SizedBox(
+                      height: 62,
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
+                        ),
+                        child: CachedNetworkImage(
+                          imageUrl: Aux.resdbToHttp(record.thumbnailUri),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          placeholder: (context, url) => Center(
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colorScheme.primary,
+                            )
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            color: colorScheme.secondaryContainer.withOpacity(0.5),
+                            child: Icon(
+                              Icons.broken_image_rounded,
+                              color: colorScheme.onSecondaryContainer,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Simplified text area with minimal padding
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 2, 4, 3),
+                      child: Text(
+                        record.formattedName.toString(),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          fontSize: 11,
+                          height: 1.0,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+    }
   }
 
   @override

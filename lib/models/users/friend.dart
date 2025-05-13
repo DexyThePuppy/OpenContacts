@@ -139,8 +139,8 @@ class Friend implements Comparable {
       contactStatus: contactStatus ?? this.contactStatus,
       latestMessageTime: latestMessageTime ?? this.latestMessageTime,
       registrationDate: registrationDate ?? this.registrationDate,
-      categories: this.categories,
-      supporterMetadata: this.supporterMetadata,
+      categories: categories,
+      supporterMetadata: supporterMetadata,
     );
   }
 

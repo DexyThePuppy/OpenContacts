@@ -81,7 +81,18 @@ class _HomeState extends State<Home> {
           SettingsPage(),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
+      extendBody: true,
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Material(
+          elevation: 8,
+          borderRadius: BorderRadius.circular(28),
+          clipBehavior: Clip.antiAlias,
+          color: Theme.of(context).colorScheme.surface,
+          child: NavigationBar(
+            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            height: 64,
         selectedIndex: _selectedPage,
         onDestinationSelected: _changePage,
         destinations: const [
@@ -102,6 +113,8 @@ class _HomeState extends State<Home> {
             label: "Settings",
           ),
         ],
+          ),
+        ),
       ),
     );
   }

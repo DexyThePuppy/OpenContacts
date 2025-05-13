@@ -16,7 +16,7 @@ class User {
       profile = null;
     }
     return User(
-      id: map["id"],
+      id: map["id"]?.toString() ?? "",
       username: map["username"],
       registrationDate: DateTime.parse(map["registrationDate"]),
       userProfile: profile,

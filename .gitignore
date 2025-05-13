@@ -45,3 +45,4 @@ app.*.map.json
 /android/key.properties
 
 # NEVER STORE ANY KEY OR API KEYS WHEN COMMITING CODE!!
+.aider*

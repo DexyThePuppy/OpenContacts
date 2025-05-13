@@ -7,6 +7,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:open_contacts/clients/settings_client.dart';
 import 'package:open_contacts/auxiliary.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'dart:io' show Platform, Process, Directory, File;
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -158,6 +161,49 @@ class SettingsPage extends StatelessWidget {
           title: const Text('ResDB Link Converter'),
           subtitle: const Text('Convert ResDB links to HTTP URLs'),
           onTap: () => _showResDBConverter(context),
+        ),
+        ListTile(
+          trailing: const Icon(Icons.folder_open),
+          title: const Text("Open Cache Folder"),
+          subtitle: const Text("Browse downloaded profiles & icons"),
+          onTap: () async {
+            String cachePath;
+            try {
+              final exeDir = File(Platform.resolvedExecutable).parent;
+              cachePath = p.join(exeDir.path, '.cache', 'users');
+            } catch (_) {
+              final baseDir = await getApplicationSupportDirectory();
+              cachePath = p.join(baseDir.path, '.cache', 'users');
+            }
+            final dir = Directory(cachePath);
+            if (!await dir.exists()) {
+              try {
+                await dir.create(recursive: true);
+              } catch (_) {}
+            }
+            bool opened = false;
+            try {
+              if (Platform.isWindows) {
+                final result = await Process.run('explorer', [cachePath]);
+                opened = result.exitCode == 0;
+              } else if (Platform.isMacOS) {
+                final result = await Process.run('open', [cachePath]);
+                opened = result.exitCode == 0;
+              } else if (Platform.isLinux) {
+                final result = await Process.run('xdg-open', [cachePath]);
+                opened = result.exitCode == 0;
+              } else {
+                opened = await launchUrl(Uri.file(cachePath), mode: LaunchMode.externalApplication);
+              }
+            } catch (_) {
+              opened = false;
+            }
+            if (!opened && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Failed to open folder')),
+              );
+            }
+          },
         ),
       ],
     );

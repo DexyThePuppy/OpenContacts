@@ -188,8 +188,9 @@ class _ReconState extends State<Recon> {
                 create: (context) {
                   final clientHolder =
                       context.findAncestorWidgetOfExactType<ClientHolder>();
-                  if (clientHolder == null)
+                  if (clientHolder == null) {
                     throw Exception('ClientHolder not found');
+                  }
                   return MessagingClient(
                     apiClient: clientHolder.apiClient,
                     settingsClient: clientHolder.settingsClient,
@@ -201,8 +202,9 @@ class _ReconState extends State<Recon> {
                 create: (context) {
                   final clientHolder =
                       context.findAncestorWidgetOfExactType<ClientHolder>();
-                  if (clientHolder == null)
+                  if (clientHolder == null) {
                     throw Exception('ClientHolder not found');
+                  }
                   return SessionClient(
                     apiClient: clientHolder.apiClient,
                     settingsClient: clientHolder.settingsClient,
@@ -214,8 +216,9 @@ class _ReconState extends State<Recon> {
                 create: (context) {
                   final clientHolder =
                       context.findAncestorWidgetOfExactType<ClientHolder>();
-                  if (clientHolder == null)
+                  if (clientHolder == null) {
                     throw Exception('ClientHolder not found');
+                  }
                   return InventoryClient(
                     apiClient: clientHolder.apiClient,
                   );

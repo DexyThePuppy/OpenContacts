@@ -36,14 +36,14 @@ class StorageSpace extends Entitlement {
 
   factory StorageSpace.fromMap(Map map) {
     return StorageSpace(
-      bytes: map["bytes"],
-      maximumShareLevel: map["maximumShareLevel"],
-      storageId: map["storageId"],
-      group: map["group"],
+      bytes: map["bytes"] is int ? map["bytes"] : int.tryParse(map["bytes"]?.toString() ?? "0") ?? 0,
+      maximumShareLevel: map["maximumShareLevel"] is int ? map["maximumShareLevel"] : int.tryParse(map["maximumShareLevel"]?.toString() ?? "0") ?? 0,
+      storageId: map["storageId"]?.toString() ?? "",
+      group: map["group"]?.toString() ?? "",
       startsOn: DateTime.tryParse(map["startsOn"] ?? "") ?? DateTimeX.epoch,
       expiresOn: DateTime.tryParse(map["expiresOn"] ?? "") ?? DateTimeX.epoch,
-      name: map["name"],
-      description: map["description"],
+      name: map["name"]?.toString() ?? "",
+      description: map["description"]?.toString() ?? "",
     );
   }
 }

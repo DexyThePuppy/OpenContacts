@@ -107,10 +107,21 @@ class UserStatus {
     final statusString = map["onlineStatus"].toString();
     final status = OnlineStatus.fromString(statusString);
 
+    // Get badges from status and profile if available
     final List<String> badgeTags =
         (map["badges"] as List? ?? []).cast<String>();
+    
+    // Get additional badges from profile if available
+    final userProfile = map["profile"] as Map?;
+    final List<String> profileBadgeTags = userProfile != null
+        ? (userProfile["displayBadges"] as List? ?? []).cast<String>()
+        : [];
+    
+    // Combine badges from status and profile
+    final Set<String> allBadgeTags = {...badgeTags, ...profileBadgeTags};
+    
     final List<badges_db.Badge> badges =
-        badges_db.BadgesDB.getBadgesForUser(badgeTags);
+        badges_db.BadgesDB.getBadgesForUser(allBadgeTags.toList());
 
     return UserStatus(
       userId: map["userId"] ?? "",

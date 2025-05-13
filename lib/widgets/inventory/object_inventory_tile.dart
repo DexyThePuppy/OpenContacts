@@ -17,88 +17,90 @@ class ObjectInventoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Card(
+      margin: EdgeInsets.zero,
       elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      color: selected ? colorScheme.primaryContainer : colorScheme.surface,
       shape: RoundedRectangleBorder(
         side: BorderSide(
-          color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
+          color: selected ? colorScheme.primary.withOpacity(0.6) : colorScheme.outlineVariant.withOpacity(0.5),
+          width: 0.5,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
         onLongPress: onLongPress,
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
+        splashColor: colorScheme.primary.withOpacity(0.1),
+        highlightColor: colorScheme.primary.withOpacity(0.05),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              flex: 5,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Hero(
-                  tag: record.id,
-                  child: Center(
-                    child: CachedNetworkImage(
-                      height: double.infinity,
-                      width: double.infinity,
-                      imageUrl: Aux.resdbToHttp(record.thumbnailUri),
-                      fit: BoxFit.cover,
-                      errorWidget: (context, url, error) => const Center(
-                        child: Icon(
-                          Icons.broken_image,
-                          size: 64,
-                        ),
-                      ),
-                      placeholder: (context, uri) =>
-                      const Center(child: CircularProgressIndicator()),
+            SizedBox(
+              height: 120,
+              width: double.infinity,
+              child: Hero(
+                tag: record.id,
+                child: CachedNetworkImage(
+                  imageUrl: Aux.resdbToHttp(record.thumbnailUri),
+                  fit: BoxFit.cover,
+                  errorWidget: (context, url, error) => Center(
+                    child: Icon(
+                      Icons.broken_image_rounded,
+                      size: 36,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  placeholder: (context, uri) => Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colorScheme.primary,
                     ),
                   ),
                 ),
               ),
             ),
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(
-                          child: FormattedText(
-                            record.formattedName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        FormattedText(
+                          record.formattedName,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 13,
+                            height: 1.1,
+                            letterSpacing: 0,
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 4,
-                    ),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.access_time,
-                          size: 12,
-                          color: Colors.white54,
-                        ),
-                        const SizedBox(
-                          width: 4,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           _dateFormat.format(record.creationTime),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white54),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 11,
+                            height: 1.0,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            )
+            ),
           ],
         ),
       ),

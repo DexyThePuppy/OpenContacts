@@ -14,7 +14,6 @@ import 'package:open_contacts/client_holder.dart';
 import 'package:open_contacts/widgets/my_profile_dialog.dart';
 import 'package:open_contacts/models/contact_tabs_config.dart';
 import 'package:open_contacts/badges_db.dart';
-import 'dart:ui' as ui;
 
 class FriendListTile extends StatefulWidget {
   const FriendListTile(
@@ -51,7 +50,7 @@ class _FriendListTileState extends State<FriendListTile>
   Widget build(BuildContext context) {
     super.build(context);
 
-    final imageUri = Aux.resdbToHttp(widget.friend.userProfile.iconUrl);
+    final imageUri = Aux.getProfileImageUrl(widget.friend.userProfile);
     final theme = Theme.of(context);
     final mClient = Provider.of<MessagingClient>(context, listen: false);
     final tabsConfig = Provider.of<ContactTabsConfig>(context, listen: true);
@@ -110,10 +109,20 @@ class _FriendListTileState extends State<FriendListTile>
                               : Alignment.center,
                           end: Alignment.center,
                         ),
-                        builder: (context, alignment, child) => Image.network(
-                          imageUri,
+                        builder: (context, alignment, child) => FutureBuilder<ImageProvider>(
+                          future: Aux.getProfileImageProvider(null, userId: widget.friend.id),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              return Image(
+                                image: snapshot.data!,
                           fit: BoxFit.cover,
                           alignment: alignment,
+                              );
+                            } else {
+                              // Fallback while loading
+                              return Container(color: Theme.of(context).colorScheme.surfaceContainerHighest);
+                            }
+                          },
                         ),
                       ),
                     ),
@@ -128,16 +137,26 @@ class _FriendListTileState extends State<FriendListTile>
                   color: theme.colorScheme.surfaceContainerHighest,
                   child: Container(
                     padding: const EdgeInsets.all(8),
-                    child: Container(
+                    child: FutureBuilder<ImageProvider>(
+                      future: Aux.getProfileImageProvider(null, userId: widget.friend.id),
+                      builder: (context, snapshot) {
+                        return Container(
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        image: DecorationImage(
+                            image: snapshot.hasData
+                                ? DecorationImage(
+                                    image: snapshot.data!,
+                                    fit: BoxFit.cover,
+                                  )
+                                : DecorationImage(
                           image: NetworkImage(imageUri),
                           fit: BoxFit.cover,
                         ),
                       ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -146,7 +165,7 @@ class _FriendListTileState extends State<FriendListTile>
                   child: Card(
                     color: theme.colorScheme.surfaceContainerHighest,
                     child: ListTile(
-                      leading: GenericAvatar(imageUri: imageUri),
+                      leading: GenericAvatar(userId: widget.friend.id, imageUri: imageUri),
                       title: Text(widget.friend.username),
                     ),
                   ),
@@ -184,6 +203,7 @@ class _FriendListTileState extends State<FriendListTile>
                           width: 30,
                           height: 30,
                           child: GenericAvatar(
+                            userId: widget.friend.id,
                             imageUri: imageUri,
                             radius: 18,
                           ),
@@ -224,7 +244,7 @@ class _FriendListTileState extends State<FriendListTile>
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.surfaceVariant
+                                color: theme.colorScheme.surfaceContainerHighest
                                     .withOpacity(0.3),
                                 borderRadius: BorderRadius.circular(8),
                               ),
@@ -235,23 +255,36 @@ class _FriendListTileState extends State<FriendListTile>
                                       .map((badge) {
                                     return Padding(
                                       padding: const EdgeInsets.only(right: 4),
-                                      child: Image.network(badge.assetUrl,
+                                      child: FutureBuilder<ImageProvider>(
+                                        future: Aux.getProfileImageProvider(null, userId: null),
+                                        builder: (context, snapshot) {
+                                          return Image(
+                                            image: snapshot.hasData 
+                                              ? snapshot.data! 
+                                              : NetworkImage(badge.assetUrl),
                                           width: 16,
                                           height: 16,
-                                          color: theme
-                                              .colorScheme.onSurfaceVariant),
+                                            color: theme.colorScheme.onSurfaceVariant,
+                                          );
+                                        },
+                                      ),
                                     );
-                                  }).toList(),
+                                  }),
                                   if (widget.friend.userStatus.isHost ?? false)
                                     Padding(
                                       padding: const EdgeInsets.only(right: 4),
-                                      child: Image.network(
-                                        BadgesDB.commonBadges['host']
-                                                ?.assetUrl ??
-                                            '',
+                                      child: FutureBuilder<ImageProvider>(
+                                        future: Aux.getProfileImageProvider(null, userId: null),
+                                        builder: (context, snapshot) {
+                                          return Image(
+                                            image: snapshot.hasData 
+                                              ? snapshot.data! 
+                                              : NetworkImage(BadgesDB.commonBadges['host']?.assetUrl ?? ''),
                                         width: 16,
                                         height: 16,
                                         color: const Color(0xFFE69E50),
+                                          );
+                                        },
                                       ),
                                     ),
                                   if (widget
@@ -262,36 +295,52 @@ class _FriendListTileState extends State<FriendListTile>
                                       false)
                                     Padding(
                                       padding: const EdgeInsets.only(right: 4),
-                                      child: Image.network(
-                                        BadgesDB.commonBadges['supporter']
-                                                ?.assetUrl ??
-                                            '',
+                                      child: FutureBuilder<ImageProvider>(
+                                        future: Aux.getProfileImageProvider(null, userId: null),
+                                        builder: (context, snapshot) {
+                                          return Image(
+                                            image: snapshot.hasData 
+                                              ? snapshot.data! 
+                                              : NetworkImage(BadgesDB.commonBadges['supporter']?.assetUrl ?? ''),
                                         width: 16,
                                         height: 16,
                                         color: const Color(0xFFFF424D),
+                                          );
+                                        },
                                       ),
                                     ),
                                   if (widget.friend.userProfile.isTeamMember)
                                     Padding(
                                       padding: const EdgeInsets.only(right: 4),
-                                      child: Image.network(
-                                        BadgesDB.teamBadges['team']?.assetUrl ??
-                                            '',
+                                      child: FutureBuilder<ImageProvider>(
+                                        future: Aux.getProfileImageProvider(null, userId: null),
+                                        builder: (context, snapshot) {
+                                          return Image(
+                                            image: snapshot.hasData 
+                                              ? snapshot.data! 
+                                              : NetworkImage(BadgesDB.teamBadges['team']?.assetUrl ?? ''),
                                         width: 16,
                                         height: 16,
                                         color: const Color(0xFF00B0F4),
+                                          );
+                                        },
                                       ),
                                     ),
                                   if (widget.friend.userProfile.isModerator)
                                     Padding(
                                       padding: const EdgeInsets.only(right: 4),
-                                      child: Image.network(
-                                        BadgesDB.teamBadges['moderator']
-                                                ?.assetUrl ??
-                                            '',
+                                      child: FutureBuilder<ImageProvider>(
+                                        future: Aux.getProfileImageProvider(null, userId: null),
+                                        builder: (context, snapshot) {
+                                          return Image(
+                                            image: snapshot.hasData 
+                                              ? snapshot.data! 
+                                              : NetworkImage(BadgesDB.teamBadges['moderator']?.assetUrl ?? ''),
                                         width: 16,
                                         height: 16,
                                         color: const Color(0xFF1ABC9C),
+                                          );
+                                        },
                                       ),
                                     ),
                                 ],

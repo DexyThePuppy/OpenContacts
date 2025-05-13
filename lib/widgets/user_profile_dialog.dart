@@ -84,10 +84,17 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
                   borderRadius: BorderRadius.circular(28),
                   child: ImageFiltered(
                     imageFilter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-                    child: Image.network(
-                      Aux.resdbToHttp(displayUser.userProfile?.iconUrl),
+                    child: FutureBuilder<ImageProvider>(
+                      future: Aux.getProfileImageProvider(displayUser.userProfile, userId: displayUser.id),
+                      builder: (context, snapshot) {
+                        return Image(
+                          image: snapshot.hasData 
+                            ? snapshot.data!
+                            : NetworkImage(Aux.resdbToHttp(displayUser.userProfile?.iconUrl)),
                       fit: BoxFit.cover,
                       opacity: const AlwaysStoppedAnimation(0.1),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -150,6 +157,7 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
                   Row(
                     children: [
                       GenericAvatar(
+                        userId: displayUser.id,
                         imageUri:
                             Aux.resdbToHttp(displayUser.userProfile?.iconUrl),
                         radius: 32,
@@ -181,10 +189,17 @@ class _UserProfileDialogState extends State<UserProfileDialog> {
                                               .userProfile!.displayBadges)
                                       .map<Widget>((badge) => Tooltip(
                                             message: badge.name,
-                                            child: Image.network(
-                                              Aux.resdbToHttp(badge.assetUrl),
+                                            child: FutureBuilder<ImageProvider>(
+                                              future: Aux.getProfileImageProvider(null, userId: null),
+                                              builder: (context, snapshot) {
+                                                return Image(
+                                                  image: snapshot.hasData
+                                                    ? snapshot.data!
+                                                    : NetworkImage(Aux.resdbToHttp(badge.assetUrl)),
                                               height: 24,
                                               width: 24,
+                                                );
+                                              },
                                             ),
                                           ))
                                       .toList(),

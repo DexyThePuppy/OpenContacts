@@ -29,7 +29,7 @@ class PersonalProfile {
 
   factory PersonalProfile.fromMap(Map<String, dynamic> map) {
     return PersonalProfile(
-      id: map["id"] ?? "",
+      id: map["id"]?.toString() ?? "",
       username: map["username"] ?? "",
       email: map["email"] ?? "",
       publicBanExpiration: DateTime.tryParse(map["publicBanExpiration"] ?? ""),
@@ -61,7 +61,7 @@ class StorageQuota {
 
   factory StorageQuota.fromMap(Map map) {
     return StorageQuota(
-      id: map["id"] ?? "",
+      id: map["id"]?.toString() ?? "",
       usedBytes: map["usedBytes"] ?? 0,
       quotaBytes: map["quotaBytes"] ?? 0,
       fullQuotaBytes: map["fullQuotaBytes"] ?? 0,
@@ -104,12 +104,12 @@ class PatreonSupporter extends SupporterMetadata {
 
   factory PatreonSupporter.fromMap(Map map) {
     return PatreonSupporter(
-      isActiveSupporter: map["isActiveSupporter"],
-      totalSupportMonths: map["totalSupportMonths"],
-      totalSupportCents: map["totalSupportCents"],
-      lastTierCents: map["lastTierCents"],
-      highestTierCents: map["highestTierCents"],
-      lowestTierCents: map["lowestTierCents"],
+      isActiveSupporter: map["isActiveSupporter"] ?? false,
+      totalSupportMonths: map["totalSupportMonths"] is int ? map["totalSupportMonths"] : int.tryParse(map["totalSupportMonths"]?.toString() ?? "0") ?? 0,
+      totalSupportCents: map["totalSupportCents"] is int ? map["totalSupportCents"] : int.tryParse(map["totalSupportCents"]?.toString() ?? "0") ?? 0,
+      lastTierCents: map["lastTierCents"] is int ? map["lastTierCents"] : int.tryParse(map["lastTierCents"]?.toString() ?? "0") ?? 0,
+      highestTierCents: map["highestTierCents"] is int ? map["highestTierCents"] : int.tryParse(map["highestTierCents"]?.toString() ?? "0") ?? 0,
+      lowestTierCents: map["lowestTierCents"] is int ? map["lowestTierCents"] : int.tryParse(map["lowestTierCents"]?.toString() ?? "0") ?? 0,
       firstSupportTimestamp: DateTime.tryParse(map["firstSupportTimestamp"] ?? "") ?? DateTimeX.epoch,
       lastSupportTimestamp: DateTime.tryParse(map["lastSupportTimestamp"] ?? "") ?? DateTimeX.epoch,
     );

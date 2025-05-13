@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:open_contacts/client_holder.dart';
 import 'package:open_contacts/clients/messaging_client.dart'
-    show MessagingClient, ViewMode;
+    show MessagingClient;
 import 'package:open_contacts/models/users/online_status.dart';
 import 'package:open_contacts/widgets/friends/user_search.dart';
 import 'package:open_contacts/widgets/my_profile_dialog.dart';
@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:open_contacts/models/contact_tabs_config.dart';
+import 'package:open_contacts/models/view_modes.dart';
 
 class FriendsListAppBar extends StatefulWidget {
   final void Function(int)? onTabChanged;
@@ -94,13 +95,38 @@ class _FriendsListAppBarState extends State<FriendsListAppBar>
           ),
           actions: [
             Consumer<MessagingClient>(
-              builder: (context, client, _) => IconButton(
+              builder: (context, client, _) => PopupMenuButton<ViewMode>(
                 icon: Icon(client.viewMode.icon),
-                onPressed: () {
-                  client.viewMode = client.viewMode == ViewMode.list
-                      ? ViewMode.tiles
-                      : ViewMode.list;
+                tooltip: "Change view",
+                onSelected: (ViewMode mode) {
+                  client.viewMode = mode;
                 },
+                itemBuilder: (context) => ViewMode.values
+                  .map(
+                    (mode) => PopupMenuItem(
+                      value: mode,
+                      child: Row(
+                        children: [
+                          Icon(
+                            mode.icon,
+                            color: client.viewMode == mode
+                                ? Theme.of(context).colorScheme.primary
+                                : null,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            mode.label,
+                            style: TextStyle(
+                              color: client.viewMode == mode
+                                  ? Theme.of(context).colorScheme.primary
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
               ),
             ),
             Consumer<MessagingClient>(builder: (context, client, _) {

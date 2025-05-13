@@ -44,16 +44,28 @@ class _UserListTileState extends State<UserListTile> {
             ),
           ],
         ),
-        child: GenericAvatar(
-          imageUri: Aux.resdbToHttp(widget.user.userProfile?.iconUrl),
+        child: FutureBuilder<ImageProvider>(
+          future: Aux.getProfileImageProvider(widget.user.userProfile, userId: widget.user.id),
+          builder: (context, snapshot) {
+            return GenericAvatar(
+              userId: widget.user.id,
+              imageUri: snapshot.hasData ? snapshot.data!.toString() : Aux.getProfileImageUrl(widget.user.userProfile),
+            );
+          },
         ),
       ),
       childWhenDragging: Card(
         elevation: 0,
         color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
         child: ListTile(
-          leading: GenericAvatar(
-            imageUri: Aux.resdbToHttp(widget.user.userProfile?.iconUrl),
+          leading: FutureBuilder<ImageProvider>(
+            future: Aux.getProfileImageProvider(widget.user.userProfile, userId: widget.user.id),
+            builder: (context, snapshot) {
+              return GenericAvatar(
+                userId: widget.user.id,
+                imageUri: snapshot.hasData ? snapshot.data!.toString() : Aux.getProfileImageUrl(widget.user.userProfile),
+              );
+            },
           ),
           title: Text(
             widget.user.username,
@@ -77,8 +89,14 @@ class _UserListTileState extends State<UserListTile> {
         elevation: 0,
         color: colorScheme.surface,
         child: ListTile(
-          leading: GenericAvatar(
-            imageUri: Aux.resdbToHttp(widget.user.userProfile?.iconUrl),
+          leading: FutureBuilder<ImageProvider>(
+            future: Aux.getProfileImageProvider(widget.user.userProfile, userId: widget.user.id),
+            builder: (context, snapshot) {
+              return GenericAvatar(
+                userId: widget.user.id,
+                imageUri: snapshot.hasData ? snapshot.data!.toString() : Aux.getProfileImageUrl(widget.user.userProfile),
+              );
+            },
           ),
           title: Text(
             widget.user.username,
