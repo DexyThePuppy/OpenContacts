@@ -46,3 +46,4 @@ app.*.map.json
 
 # NEVER STORE ANY KEY OR API KEYS WHEN COMMITING CODE!!
 .aider*
+flutter/

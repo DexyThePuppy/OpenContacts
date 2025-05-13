@@ -71,26 +71,29 @@ class _HomeState extends State<Home> {
           child: _appBars[_selectedPage],
         ),
       ),
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        children: const [
-          SessionList(),
-          FriendsList(),
-          InventoryBrowser(),
-          SettingsPage(),
-        ],
+      body: Padding(
+        padding: const EdgeInsets.only(bottom: 80, left: 12, right: 12),
+        child: PageView(
+          controller: _pageController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: const [
+            SessionList(),
+            FriendsList(),
+            InventoryBrowser(),
+            SettingsPage(),
+          ],
+        ),
       ),
       extendBody: true,
       bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(12.0),
         child: Material(
           elevation: 8,
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(12),
           clipBehavior: Clip.antiAlias,
           color: Theme.of(context).colorScheme.surface,
           child: NavigationBar(
-            backgroundColor: Colors.transparent,
+            backgroundColor: const Color.fromARGB(50, 0, 0, 0),
             surfaceTintColor: Colors.transparent,
             height: 64,
         selectedIndex: _selectedPage,
